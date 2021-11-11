@@ -1,0 +1,1 @@
+ cmd /c copy /b AL032_2019-11-21_shank1-064_gnew.imec0.ap.bin+AL032_2019-11-22_shank1-065_gnew.imec0.ap.bin A1A2.bin
