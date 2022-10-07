@@ -12,11 +12,10 @@ Method:
 3D Localization + EMD
 
 Details:  
-The folder "mixed" contains simulated data with simutaneous adding and dropping points  
-computeSTAT.m calculates averaged template waveforms  
-EMD_main.m generates and/or find matching pairs with simulation data using EMD algorithm  
-- Options  
-  - EMD package: matlab, CVX, TFOCS  
-  - Dimension: 2D or 3D points  
-  - Error of spike cluster estimation: 'Pos' = error in squared space, 'xyz' = error in a rectangle space  
-  - Mode: how points are gegerated, 'standard' = uniform, 'lumpiness' = density differ by y-location, 'gainloss' = adding and/or dropping points   
+1. The folder "mixed" contains simulated data with simutaneous adding and dropping points  
+2. computeSTAT.m calculates averaged template waveforms  
+3. EMD_main.m generates and/or find matching pairs with simulation data using EMD algorithm   
+    - EMD package: matlab, CVX, TFOCS  
+    - Dimension: 2D or 3D points  
+    - Error of spike cluster estimation: 'Pos' = error in squared space, 'xyz' = error in a rectangle space  
+    - Mode: how points are gegerated, 'standard' = uniform, 'lumpiness' = density differ by y-location, 'gainloss' = adding and/or dropping points   
