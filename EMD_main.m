@@ -3,6 +3,9 @@
 clear all;
 close all;
 
+addpath(genpath('C:\Users\labadmin\Desktop\EMD_test_simulator')) % path to simulator folder
+addpath(genpath('D:\Data\Pipeline\EMD\Localization_EMD_TFOCS')) % TFOCS package
+
 pars.nTrials = 10;
 pars.npts = 50; %number of points per trial
 pars.xRange = [-50,50];
@@ -68,19 +71,21 @@ switch pars.runType %data v.s run
                 w1 = ones(length(f1),1);%ones([length(f1),1])/length(f1);
                 w2 = ones(length(f2),1);%ones([length(f2),1])/length(f2);
 
+                C = [];
+
                 switch pars.alg
                     case 'matlab'
                         [x, fval] = emd(f1, f2, w1, w2, @gdf);
                         P = reshape(x,[length(f2),length(f1)]);
                         C = gdm(f1, f2, @gdf); % Distance matrix
+
+                        EMD_cost(ich,i) = fval;
+                        Pmatrix{ich,i} = P;
                     case 'CVX'
-                        N0 = length(f1);
-                        N = length(f2);
-                        C = [];
                         %b = min(min(f1),min(f2)); %shift for any negative values, determined by the smallest point
-                        for iclu = 1:N
-                            for jclu = 1:N0
-                                C(iclu,jclu) = sqrt((f2(iclu,1)-f1(jclu,1))^2 + (f2(iclu,2)-f1(jclu,2))^2 + (f2(iclu,3)-f1(jclu,3))^2);
+                        for iclu = 1:length(f1)
+                            for jclu = 1:length(f2)
+                                C(iclu,jclu) = sqrt((f1(iclu,1)-f2(jclu,1))^2 + (f1(iclu,2)-f2(jclu,2))^2 + (f1(iclu,3)-f2(jclu,3))^2);
                             end
                         end
                         % if b < 0
@@ -96,11 +101,11 @@ switch pars.runType %data v.s run
                         % cvx_solver
                         cvx_solver SDPT3 %optimization solver, if slow, try smaller x first
                         cvx_precision high
-                        variable P(N,N0) nonnegative; %f_ij >= 0
-                        minimize(C(:)'*P(:));
+                        variable P(length(f1),length(f2)) nonnegative; %f_ij >= 0
+                        minimize(C(:)'*P(:)); %vectorize C by col, C became f2*f1
                         subject to
-                        sum(P,2)  <= w2(:); %can't move more to destination
-                        sum(P,1)' <= w1(:); %can't move more from origin
+                        sum(P,2)  <= w1(:); %can't move more to destination
+                        sum(P,1)' <= w2(:); %can't move more from origin
                         sum(P(:)) == min(sum(w2),sum(w1)); %total amount is the smaller mass
                         cvx_end
 
@@ -112,63 +117,61 @@ switch pars.runType %data v.s run
                         Pmatrix{ich,i} = P;
 
                     case 'TFOCS'
-                        C = [];
-                        mu = 1;
-                        for iclu = 1:size(f1,1)
-                            for jclu = 1:size(f2,1)
-                                C(iclu,jclu) = sqrt((f1(iclu,1)-f2(jclu,1))^2 + (f1(iclu,2)-f2(jclu,2))^2 + (f1(iclu,3)-f2(jclu,3))^2);
-                            end
-                        end
-                        C = C(:); % vectorized vertically
-                        A = @(X,T) emdConstraints(X,size(f1,1),size(f2,1),T); % Constraints matrix, T is option, takes value 0, 1, and 2
-                        b = [ones(size(f1,1),1); ones(size(f2,1),1); min(size(f1,1), size(f2,1))]; % parameter that A computed: all S1, all S2, smaller of total weights between S1 and S2
-
-                        opts.nonnegativity = true;                                                 % Make sure F is non-negative
-                        res = solver_sLP(C, A, b, mu, [], [], opts);                               % Run the Generic linear programming in standard form. c and b are vectors, A is matrix
-                        cost = sum(res.*C);                                                        % EMD value
-                        P = reshape(res,size(f1,1),size(f2,1));                                    % Reshape output
-
                         %                         mu = 1;
                         %                         for iclu = 1:size(f1,1)
                         %                             for jclu = 1:size(f2,1)
-                        %                                 x = abs(f1(iclu,1)-f2(jclu,1));
-                        %                                 z = abs(f1(iclu,2)-f2(jclu,2));
-                        %             %                     if x<=1 && z<=1
-                        %                                     C(iclu,jclu) = sqrt((f1(iclu,1)-f2(jclu,1))^2 + (f1(iclu,2)-f2(jclu,2))^2 + (f1(iclu,3)-f2(jclu,3))^2);
-                        %             %                     else
-                        %             %                         C(iclu,jclu) = 0;
-                        %             %                     end
+                        %                                 C(iclu,jclu) = sqrt((f1(iclu,1)-f2(jclu,1))^2 + (f1(iclu,2)-f2(jclu,2))^2 + (f1(iclu,3)-f2(jclu,3))^2);
                         %                             end
                         %                         end
-                        %                         C = C';
-                        %                         C = C(:); % vectorized vertically
-                        %                         tau = 1; %partial parameter
-                        %                         b = [ones(size(f1,1),1); ones(size(f2,1),1); round(tau*min(size(f1,1), size(f2,1)))]; % parameter that A computed: all S1, all S2, smaller of total weights between S1 and S2
+                        %                         C = C(:); % vectorized by col
+                        %                         A = @(X,T) emdConstraints(X,size(f1,1),size(f2,1),T); % Constraints matrix, T is option, takes value 0, 1, and 2
+                        %                         b = [ones(size(f1,1),1); ones(size(f2,1),1); min(size(f1,1), size(f2,1))]; % parameter that A computed: all S1, all S2, smaller of total weights between S1 and S2
+                        %
                         %                         opts.nonnegativity = true;                                                 % Make sure F is non-negative
-                        %                         opts.printStopCrit = true;
-                        %                         %opts.restart =
-                        %                         %opts.maxCounts = [ Inf, Inf, iteration, Inf, Inf ];
-                        %                         ind = find(C <= 20);
-                        %                         C_new = C(ind);
-                        %                         A = @(X,T) emdConstraints_threshold(X, ind, size(f1,1),size(f2,1),T); % Constraints matrix, T is option, takes value 0, 1, and 2
-                        %                         res  = solver_sLP_Rplus(C_new, A, b, mu, [], [], opts); % Run the Generic linear programming in standard form. c and b are vectors, A is matrix
+                        %                         res = solver_sLP(C, A, b, mu, [], [], opts);                               % Run the Generic linear programming in standard form. c and b are vectors, A is matrix
+                        %                         cost = sum(res.*C);                                                        % EMD value
+                        %                         P = reshape(res,size(f1,1),size(f2,1));                                    % Reshape output
 
-                        %                         cost = sum(res.*C_new);                                                        % EMD value
-                        %                         P = zeros(size(f2,1),size(f1,1));
-                        %                         P(ind) = res;
+                        mu = 1;
+                        for iclu = 1:size(f1,1)
+                            for jclu = 1:size(f2,1)
+                                x = abs(f1(iclu,1)-f2(jclu,1));
+                                z = abs(f1(iclu,2)-f2(jclu,2));
+%                                 if x<=2 && z<=2
+                                    C(iclu,jclu) = sqrt((f1(iclu,1)-f2(jclu,1))^2 + (f1(iclu,2)-f2(jclu,2))^2 + (f1(iclu,3)-f2(jclu,3))^2);
+%                                 else
+%                                     C(iclu,jclu) = 0;
+%                                 end
+                            end
+                        end
+                        C = C(:); % vectorized vertically
+                        tau = 1; %partial parameter
+                        b = [ones(size(f1,1),1); ones(size(f2,1),1); round(tau*min(size(f1,1), size(f2,1)))]; % parameter that A computed: all S1, all S2, smaller of total weights between S1 and S2
+                        opts.nonnegativity = true;                                                 % Make sure F is non-negative
+                        opts.printStopCrit = true;
+                        %opts.restart =
+                        %opts.maxCounts = [ Inf, Inf, iteration, Inf, Inf ];
+                        ind = find(C <= inf);
+                        C_new = C(ind);
+                        A = @(X,T) emdConstraints_threshold(X, ind, size(f1,1),size(f2,1),T); % Constraints matrix, T is option, takes value 0, 1, and 2
+                        res  = solver_sLP_Rplus(C_new, A, b, mu, [], [], opts); % Run the Generic linear programming in standard form. c and b are vectors, A is matrix
+
+                        cost = sum(res.*C_new);                                                        % EMD value
+                        P = zeros(size(f1,1),size(f2,1));
+                        P(ind) = res;
 
 
 
                         EMD_cost(ich,i) = cost;
                         Pmatrix{ich,i} = P;
                 end
-                % calculate norm
-                C = reshape(C,[length(f1),length(f2)]);
-                %distance(ip,i) = mean(C,'all'); %calculate mean interneuron distance
-                sortC = sort(C);
-                neighborAve(ich,i) = mean(sortC(2,:)); %find mean of all nearest neighbor distance
-                move = diag(C);
-                offsetMean(ich,i) = mean(move); %calculate mean offset between points
+                %                 % calculate norm
+                %                 C = reshape(C,[length(f1),length(f2)]);
+                %                 %distance(ip,i) = mean(C,'all'); %calculate mean interneuron distance
+                %                 sortC = sort(C);
+                %                 neighborAve(ich,i) = mean(sortC(2,:)); %find mean of all nearest neighbor distance
+                %                 move = diag(C);
+                %                 offsetMean(ich,i) = mean(move); %calculate mean offset between points
 
                 noMatch = [];
                 switch pars.changeType
@@ -210,41 +213,46 @@ switch pars.runType %data v.s run
                         %                         histogram(correct_dis)
 
 
-
-
-                        P_new = zeros(length(f1), length(f2));
-                        P_new = P;
-                        P_new(P_new==0) = nan;
-                        noMatch(:,1) = find(all(isnan(P_new),2)); %find rows with all nan
-                        [~,max_ind] = max(P_new,[],2); %nonzero max in every row
-                        % match index
+                        % find nonzero matches
+                        matched_ind = [];
+                        P_nz = find(sum(P,1) ~= 0); %find cols with entries
+                        [~,max_ind] = max(P(:,P_nz),[],1); %max in every nonzero col
+                        matched_ind(:,1) = P_nz; %f2 index has match
+                        matched_ind(:,2) = max_ind; %corresponding f1 index match
+                        % find cols with no match
+                        noMatch(:,1) = find(sum(P,1) == 0); %f2 cols with all zeros
+                        % find f1 correspondence in f2
                         f2_same = points.f2_same; %points preserved in f2
                         [q, f2_unchanged] = ismember(f2_same, f2, 'rows'); %the new index in f2 corresponds to true f1 pair index
+                        f2_unchanged(length(f1)+1:length(f2),1) = 0; %added points have no pairs
+                        matched_ind(:,3) = f2_unchanged(P_nz); %correct f1
 
-                        % reorganize matches
-                        f2_match = f2(max_ind,:); %f2 index
-                        numIncorrect(ich, i) = sum(max_ind(:) ~= f2_unchanged);
+                        % count matches
+                        numIncorrect(ich, i) = sum(matched_ind(:,3) ~= matched_ind(:,2));
                         perIncorrect(ich, i) = numIncorrect(ich, i)/(length(f1)+ich);
-                        if ~isempty(noMatch) %number of correct unmatch
-                            correct_no = sum(ismember(noMatch,loss)) + sum(ismember([length(f1)+1:1:length(f1)+ich],noMatch));
-                            numIncorrect(ich, i) = numIncorrect(ich, i) - correct_no;
+                        if ~isempty(noMatch) %add number of correct unmatch
+                            incorrect_no = length(noMatch) - (sum(ismember(noMatch,loss)) + sum(ismember([length(f1)+1:1:length(f1)+ich],noMatch)));
+                            numIncorrect(ich, i) = numIncorrect(ich, i) + incorrect_no;
                             perIncorrect(ich, i) = numIncorrect(ich, i)/(length(f1)+ich);
                         end
 
-                        % calculate distance of matched pairs
-                        match_dis = zeros(length(f1),4);
-                        match_dis(:,1) = 1:length(f1); %f1 index
-                        match_dis(:,2) = f2_unchanged(1:length(f1)); %f2 index corresponds to f1
-                        match_dis(:,3) = max_ind(1:length(f1)); %result match index in f2 scale
-                        correct_dis = zeros(length(f1),1);
-                        for ir = 1:length(f1)
-                            match_dis(ir,4) = sqrt( (f1(ir,1)-f2(match_dis(ir,3),1))^2 + (f1(ir,2)-f2(match_dis(ir,3),2))^2 + (f1(ir,3)-f2(match_dis(ir,3),3))^2 );
-                            correct_dis(ir) = sqrt( (f1(ir,1)-f2(match_dis(ir,2),1))^2 + (f1(ir,2)-f2(match_dis(ir,2),2))^2 + (f1(ir,3)-f2(match_dis(ir,2),3))^2 );
-                        end
-                        figure(i)
-                        histogram(match_dis(:,4),10)
-                        figure(10+i)
-                        histogram(correct_dis)
+                        %                         correct_dis = zeros(length(matched_ind),1);
+                        %                         for ir = 1:length(matched_ind)
+                        %                             if matched_ind(ir,3) == 0
+                        %                                 matched_ind(ir,4) = sqrt( (f1(matched_ind(ir,2),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,2),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,2),3)-f2(matched_ind(ir,1),3))^2 );
+                        %                                 correct_dis(ir,1) = 0;
+                        %                             elseif matched_ind(ir,2) > length(f1)
+                        %                                 matched_ind(ir,4) = 0;
+                        %                                 correct_dis(ir,1) = sqrt( (f1(matched_ind(ir,3),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,3),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,3),3)-f2(matched_ind(ir,1),3))^2 );
+                        %                             else
+                        %                                 matched_ind(ir,4) = sqrt( (f1(matched_ind(ir,2),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,2),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,2),3)-f2(matched_ind(ir,1),3))^2 );
+                        %                                 correct_dis(ir,1) = sqrt( (f1(matched_ind(ir,3),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,3),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,3),3)-f2(matched_ind(ir,1),3))^2 );
+                        %                             end
+                        %                         end
+                        %                         figure(i)
+                        %                         histogram(matched_ind(:,4),10)
+                        %                         figure(10+i)
+                        %                         histogram(correct_dis)
 
 
 
@@ -281,83 +289,95 @@ switch pars.runType %data v.s run
                         %                         figure(10+i)
                         %                         histogram(correct_dis)
 
-                        P_new = zeros(length(f1), length(f2));
-                        P_new = P;
-                        P_new(P_new==0) = nan;
-                        noMatch(:,1) = find(all(isnan(P_new),2)); %find rows with all nan
-                        [~,max_ind] = max(P_new,[],2); %nonzero max in every row
-                        % match index
-                        f2_same = points.f2_same;
-                        [q, f2_unchanged] = ismember(f2_same, f2, 'rows'); %the new index in f2 corresponds to true f1 pair index
 
-                        % reorganize matches
-                        f2_match = f2(max_ind,:); %f2 index
-                        numIncorrect(ich, i) = sum(max_ind(:) ~= f2_unchanged);
+
+                        % find nonzero matches
+                        matched_ind = [];
+                        noMatch = [];
+                        P_nz = find(sum(P,1) ~= 0); %find cols with entries
+                        [~,max_ind] = max(P(:,P_nz),[],1); %max in every nonzero col
+                        matched_ind(:,1) = P_nz; %f2 index has match
+                        matched_ind(:,2) = max_ind; %corresponding f1 index match
+                        % find cols with no match
+                        noMatch(:,1) = find(sum(P,1) == 0); %f2 cols with all zeros
+                        % find f1 correspondence in f2
+                        f2_same = points.f2_same; %points preserved in f2
+                        [q, f2_unchanged] = ismember(f2_same, f2, 'rows'); %the new index in f2 corresponds to true f1 pair index, 0 if no pair
+                        matched_ind(:,3) = f2_unchanged(P_nz); %correct f1
+
+                        % count matches
+                        numIncorrect(ich, i) = sum(matched_ind(:,3) ~= matched_ind(:,2));
                         perIncorrect(ich, i) = numIncorrect(ich, i)/(length(f1));
-                        if ~isempty(noMatch) %number of correct unmatch
-                            correct_no = sum(ismember(noMatch,loss)) + sum(ismember([length(f1)+1:1:length(f1)+ich],noMatch));
-                            numIncorrect(ich, i) = numIncorrect(ich, i) - correct_no;
+                        if ~isempty(noMatch) %add number of correct unmatch
+                            incorrect_no = length(noMatch) - (sum(ismember(noMatch,loss)) + sum(ismember([length(f1)+1:1:length(f1)+ich],noMatch)));
+                            numIncorrect(ich, i) = numIncorrect(ich, i) + incorrect_no;
                             perIncorrect(ich, i) = numIncorrect(ich, i)/(length(f1));
                         end
 
-                        % calculate distance of matched pairs
-                        match_dis = zeros(length(f1),4);
-                        match_dis(:,1) = 1:length(f1); %f1 index
-                        match_dis(:,2) = f2_unchanged; %f2 index corresponds to f1
-                        match_dis(:,3) = max_ind; %result match index in f2 scale
-                        correct_dis = zeros(length(f1),1);
-                        for ir = 1:length(f1)
-                            match_dis(ir,4) = sqrt( (f1(ir,1)-f2(match_dis(ir,3),1))^2 + (f1(ir,2)-f2(match_dis(ir,3),2))^2 + (f1(ir,3)-f2(match_dis(ir,3),3))^2 );
-                            if ~ismember(ir,loss)
-                                correct_dis(ir) = sqrt( (f1(ir,1)-f2(match_dis(ir,2),1))^2 + (f1(ir,2)-f2(match_dis(ir,2),2))^2 + (f1(ir,3)-f2(match_dis(ir,2),3))^2 );
-                            else
-                                correct_dis(ir) = sqrt( (f1(ir,1)-0)^2 + (f1(ir,2)-0)^2 + (f1(ir,3)-0)^2 );
-                            end
-                        end
-                        figure(i)
-                        histogram(match_dis(:,4),10)
-                        figure(10+i)
-                        histogram(correct_dis)
+                        %                         correct_dis = zeros(length(matched_ind),1);
+                        %                         for ir = 1:length(matched_ind)
+                        %                             if matched_ind(ir,3) == 0
+                        %                                 matched_ind(ir,4) = sqrt( (f1(matched_ind(ir,2),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,2),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,2),3)-f2(matched_ind(ir,1),3))^2 );
+                        %                                 correct_dis(ir,1) = 0;
+                        %                             elseif matched_ind(ir,2) > length(f1)
+                        %                                 matched_ind(ir,4) = 0;
+                        %                                 correct_dis(ir,1) = sqrt( (f1(matched_ind(ir,3),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,3),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,3),3)-f2(matched_ind(ir,1),3))^2 );
+                        %                             else
+                        %                                 matched_ind(ir,4) = sqrt( (f1(matched_ind(ir,2),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,2),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,2),3)-f2(matched_ind(ir,1),3))^2 );
+                        %                                 correct_dis(ir,1) = sqrt( (f1(matched_ind(ir,3),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,3),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,3),3)-f2(matched_ind(ir,1),3))^2 );
+                        %                             end
+                        %                         end
+                        %                         figure(i)
+                        %                         histogram(matched_ind(:,4),10)
+                        %                         figure(10+i)
+                        %                         histogram(correct_dis)
+
+
+
+
 
 
                     case 'mixed'
-                        P_new = zeros(length(f1), length(f2));
-                        P_new = P;
-                        P_new(P_new==0) = nan;
-                        noMatch(:,1) = find(all(isnan(P_new),2)); %find rows with all nan
-                        [~,max_ind] = max(P_new,[],2); %nonzero max
-                        % match index
-                        f2_same = points.f2_same;
-                        [q, f2_unchanged] = ismember(f2_same, f2, 'rows'); %the new index in f2 preserved from f1
+                        % find nonzero matches
+                        matched_ind = [];
+                        noMatch = [];
+                        P_nz = find(sum(P,1) ~= 0); %find cols with entries
+                        [~,max_ind] = max(P(:,P_nz),[],1); %max in every nonzero col
+                        matched_ind(:,1) = P_nz; %f2 index has match
+                        matched_ind(:,2) = max_ind; %corresponding f1 index match
+                        % find cols with no match
+                        noMatch(:,1) = find(sum(P,1) == 0); %f2 cols with all zeros
+                        % find f1 correspondence in f2
+                        f2_same = points.f2_same; %points preserved in f2
+                        [q, f2_unchanged] = ismember(f2_same, f2, 'rows'); %the new index in f2 corresponds to true f1 pair index, 0 if no pair
+                        matched_ind(:,3) = f2_unchanged(P_nz); %correct f1
 
-                        % reorganize matches
-                        f2_match = f2(max_ind,:); %f2 index
-                        numIncorrect(ich, i) = sum(max_ind(:) ~= f2_unchanged);
+                        % count matches
+                        numIncorrect(ich, i) = sum(matched_ind(:,3) ~= matched_ind(:,2));
                         perIncorrect(ich, i) = numIncorrect(ich, i)/(length(f1)+ich);
-                        if ~isempty(noMatch) %number of correct unmatch
-                            correct_no = sum(ismember(noMatch,loss)) + sum(ismember([length(f1)+1:1:length(f1)+ich],noMatch));
-                            numIncorrect(ich, i) = numIncorrect(ich, i) - correct_no;
+                        if ~isempty(noMatch) %add number of correct unmatch
+                            incorrect_no = length(noMatch) - (sum(ismember(noMatch,loss)) + sum(ismember([length(f1)+1:1:length(f1)+ich],noMatch)));
+                            numIncorrect(ich, i) = numIncorrect(ich, i) + incorrect_no;
                             perIncorrect(ich, i) = numIncorrect(ich, i)/(length(f1)+ich);
                         end
 
-                        % calculate distance of matched pairs
-                        match_dis = zeros(length(f1),4);
-                        match_dis(:,1) = 1:length(f1); %f1 index
-                        match_dis(:,2) = f2_unchanged; %f2 index corresponds to f1
-                        match_dis(:,3) = max_ind; %result match index in f2 scale
-                        correct_dis = zeros(length(f1),1);
-                        for ir = 1:length(f1)
-                            match_dis(ir,4) = sqrt( (f1(ir,1)-f2(match_dis(ir,3),1))^2 + (f1(ir,2)-f2(match_dis(ir,3),2))^2 + (f1(ir,3)-f2(match_dis(ir,3),3))^2 );
-                            if ~ismember(ir,loss)
-                                correct_dis(ir) = sqrt( (f1(ir,1)-f2(match_dis(ir,2),1))^2 + (f1(ir,2)-f2(match_dis(ir,2),2))^2 + (f1(ir,3)-f2(match_dis(ir,2),3))^2 );
-                            else
-                                correct_dis(ir) = sqrt( (f1(ir,1)-0)^2 + (f1(ir,2)-0)^2 + (f1(ir,3)-0)^2 );
-                            end
-                        end
-                        figure(i)
-                        histogram(match_dis(:,4),10)
-                        figure(10+i)
-                        histogram(correct_dis)
+%                         correct_dis = zeros(length(matched_ind),1);
+%                         for ir = 1:length(matched_ind)
+%                             if matched_ind(ir,3) == 0
+%                                 matched_ind(ir,4) = sqrt( (f1(matched_ind(ir,2),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,2),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,2),3)-f2(matched_ind(ir,1),3))^2 );
+%                                 correct_dis(ir,1) = 0;
+%                             elseif matched_ind(ir,2) > length(f1)
+%                                 matched_ind(ir,4) = 0;
+%                                 correct_dis(ir,1) = sqrt( (f1(matched_ind(ir,3),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,3),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,3),3)-f2(matched_ind(ir,1),3))^2 );
+%                             else
+%                                 matched_ind(ir,4) = sqrt( (f1(matched_ind(ir,2),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,2),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,2),3)-f2(matched_ind(ir,1),3))^2 );
+%                                 correct_dis(ir,1) = sqrt( (f1(matched_ind(ir,3),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,3),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,3),3)-f2(matched_ind(ir,1),3))^2 );
+%                             end
+%                         end
+%                         figure(i)
+%                         histogram(matched_ind(:,4),10)
+%                         figure(10+i)
+%                         histogram(correct_dis)
                 end
             end
 
@@ -366,8 +386,8 @@ switch pars.runType %data v.s run
         end
 end
 
-% numIncorrect_cvx_gain = numIncorrect;
-% save 'C:\Users\labadmin\Desktop\EMD_test_simulator\Algorithm comparison\gain\cvx_gain50.mat' numIncorrect_cvx_gain
+% numIncorrect_tfocs_mixed_revised = numIncorrect;
+% save 'C:\Users\labadmin\Desktop\EMD_test_simulator\Algorithm comparison\mixed\tfocs_mixed50_revised.mat' numIncorrect_tfocs_mixed_revised
 
 
 % ----------------------- Helper functions ----------------------------------------
@@ -392,32 +412,32 @@ for ich = 1:length(pars.change)
 
         switch pars.changeType
             case 'gain'
-            loss = 0;
-            f2_more = [];
-            f2_more(:,1) = pars.xRange(1) + (pars.xRange(2)-pars.xRange(1))*rand([pars.change(ich),1]); % random x location
-            f2_more(:,2) = pars.zRange(1) + (pars.zRange(2)-pars.zRange(1))*rand([pars.change(ich),1]);
-            f2_more(:,3) = pars.yRange(1) + (pars.yRange(2)-pars.yRange(1))*rand([pars.change(ich),1]);
-            f2_same = f2;
-            f2 = [f2; f2_more];
+                loss = 0;
+                f2_more = [];
+                f2_more(:,1) = pars.xRange(1) + (pars.xRange(2)-pars.xRange(1))*rand([pars.change(ich),1]); % random x location
+                f2_more(:,2) = pars.zRange(1) + (pars.zRange(2)-pars.zRange(1))*rand([pars.change(ich),1]);
+                f2_more(:,3) = pars.yRange(1) + (pars.yRange(2)-pars.yRange(1))*rand([pars.change(ich),1]);
+                f2_same = f2;
+                f2 = [f2; f2_more];
             case 'loss'
-            f2_more = 0;
-            loss = randperm(pars.npts,pars.change(ich)); %unique index of loss points
-            f2_same = f2;
-            f2(loss,:) = [];
-            f2_same(loss,:) = NaN;
+                f2_more = 0;
+                loss = randperm(pars.npts,pars.change(ich)); %unique index of loss points
+                f2_same = f2;
+                f2(loss,:) = [];
+                f2_same(loss,:) = NaN;
             case 'mixed'
-            loss = randperm(pars.npts,pars.change(ich)); %unique of loss points
-            f2_same = f2;
-            f2(loss,:) = [];
-            f2_same(loss,:) = NaN;
-            f2_more = [];
-            f2_more(:,1) = pars.xRange(1) + (pars.xRange(2)-pars.xRange(1))*rand([pars.change(ich),1]); % random x location
-            f2_more(:,2) = pars.zRange(1) + (pars.zRange(2)-pars.zRange(1))*rand([pars.change(ich),1]);
-            f2_more(:,3) = pars.yRange(1) + (pars.yRange(2)-pars.yRange(1))*rand([pars.change(ich),1]);
-            f2 = [f2; f2_more];
+                loss = randperm(pars.npts,pars.change(ich)); %unique of loss points
+                f2_same = f2;
+                f2(loss,:) = [];
+                f2_same(loss,:) = NaN;
+                f2_more = [];
+                f2_more(:,1) = pars.xRange(1) + (pars.xRange(2)-pars.xRange(1))*rand([pars.change(ich),1]); % random x location
+                f2_more(:,2) = pars.zRange(1) + (pars.zRange(2)-pars.zRange(1))*rand([pars.change(ich),1]);
+                f2_more(:,3) = pars.yRange(1) + (pars.yRange(2)-pars.yRange(1))*rand([pars.change(ich),1]);
+                f2 = [f2; f2_more];
         end
         %save ([name,'trial', num2str(i), ',', ' drift=', num2str(pars.y_drift), ' error=', num2str(pars.x_err_std), '&', num2str(pars.y_err_std), '&', num2str(pars.z_err_std), '.mat'], 'f1', 'f2', 'f2_same', 'f2_more', 'loss')
-        
+
         idx = find(~isnan(f2_same(:,1)));
         figure(i);
         co = 1:length(f1);
