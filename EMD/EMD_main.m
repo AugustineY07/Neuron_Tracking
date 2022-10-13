@@ -24,6 +24,7 @@ pars.save = 1; %0 = not save, 1 = save data
 pars.rootD = 'C:\Users\labadmin\Desktop\EMD_test_simulator\'; % the simulated data files are in this folder, CHANGE to your path
 pars.runType = 1; %0 = data generation, 1 = run EMD
 pars.alg = 'TFOCS'; %1 = matlab, 2 = CVX, 3 = TFOCS
+pars.tfocs = 'n'; % 'constrained', 'partial', 'both' implements special TFOCS setting, otherwise run the default version
 pars.dimension = 3; %2 = '2D', 3 = '3D'
 pars.errorType = 'xyz'; %'Pos' = pos_err_std, 'xyz' = x_y_z_error
 pars.mode = 'gainloss'; %0 = standard, 1 = lumpiness, 2 = gainloss
@@ -107,8 +108,7 @@ switch pars.runType %data v.s run
                         Pmatrix{ich,i} = P;
 
                     case 'TFOCS'
-
-                        [P,cost] = runTfocsMatching(f1,f2,'n');
+                        [P,cost] = runTfocsMatching(f1,f2,pars.tfocs);
                         EMD_cost(ich,i) = cost;
                         Pmatrix{ich,i} = P;
                 end
