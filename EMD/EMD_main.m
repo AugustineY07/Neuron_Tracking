@@ -221,8 +221,6 @@ end
 % save 'C:\Users\labadmin\Desktop\EMD_test_simulator\Algorithm comparison\mixed\tfocs_mixed50_revised.mat' numIncorrect_tfocs_mixed_revised
 
 
-y = [0.12 0.12 12.35; 0.12, 1 22.19; 1.1 56.57 52.14]
-
 
 % ----------------------- Helper functions ----------------------------------------
 % Generate point data
