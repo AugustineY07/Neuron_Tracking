@@ -4,7 +4,8 @@ clear all;
 close all;
 
 addpath(genpath('C:\Users\labadmin\Desktop\EMD_test_simulator')) % path to simulator folder
-addpath(genpath('D:\Data\Pipeline\EMD\Localization_EMD_TFOCS')) % TFOCS package
+addpath(genpath('D:\Data\Pipeline\EMD\Localization_EMD_TFOCS')) 
+addpath(genpath('D:\Data\Pipeline\EMD\TFOCS\TFOCS-master')) % TFOCS package
 
 pars.nTrials = 10;
 pars.npts = 50; %number of points per trial
@@ -26,7 +27,7 @@ pars.dimension = 3; %2 = '2D', 3 = '3D'
 pars.errorType = 'xyz'; %'Pos' = pos_err_std, 'xyz' = x_y_z_error
 pars.mode = 'gainloss'; %0 = standard, 1 = lumpiness, 2 = gainloss
 pars.block = 4; %lumpiness: number of blocks
-pars.changeType = 'mixed'; %gainloss: 1 = gain, 2 = loss, 3 = mixed
+pars.changeType = 'loss'; %gainloss: 1 = gain, 2 = loss, 3 = mixed
 pars.change = [0.1]; %number of lost/gain points
 pars.lost = 0.1;
 
@@ -35,7 +36,7 @@ switch pars.mode
         name = ['C:\Users\labadmin\Desktop\EMD_test_simulator\data\lost0.2gain0.1\', num2str(pars.dimension),'\', pars.errorType,'\', pars.mode,'\'];
     case 'gainloss'
         name = ['C:\Users\labadmin\Desktop\EMD_test_simulator\data\', num2str(pars.dimension),'\', pars.errorType,'\', pars.mode,'\', pars.changeType,'\'];
-%lost0.2gain0.1\
+        %lost0.2gain0.1\
 end
 
 switch pars.runType %data v.s run
@@ -79,12 +80,12 @@ switch pars.runType %data v.s run
                         Pmatrix{ich,i} = P;
                     case 'CVX'
                         %b = min(min(f1),min(f2)); %shift for any negative values, determined by the smallest point
-%                         for iclu = 1:length(f1)
-%                             for jclu = 1:length(f2)
-%                                 C(iclu,jclu) = sqrt((f1(iclu,1)-f2(jclu,1))^2 + (f1(iclu,2)-f2(jclu,2))^2 + (f1(iclu,3)-f2(jclu,3))^2);
-%                             end
-%                         end
-%                         C = C';
+                        %                         for iclu = 1:length(f1)
+                        %                             for jclu = 1:length(f2)
+                        %                                 C(iclu,jclu) = sqrt((f1(iclu,1)-f2(jclu,1))^2 + (f1(iclu,2)-f2(jclu,2))^2 + (f1(iclu,3)-f2(jclu,3))^2);
+                        %                             end
+                        %                         end
+                        %                         C = C';
                         C = gdm(f1, f2, @gdf);
                         % if b < 0
                         %     x = x + abs(b);
@@ -115,48 +116,8 @@ switch pars.runType %data v.s run
                         Pmatrix{ich,i} = P;
 
                     case 'TFOCS'
-%                         mu = 1;
-%                         C = gdm(f1, f2, @gdf);
-%                         A = @(X,T) emdConstraints(X,size(f1,1),size(f2,1),T); % Constraints matrix, T is option, takes value 0, 1, and 2
-%                         b = [ones(size(f1,1),1); ones(size(f2,1),1); min(size(f1,1), size(f2,1))]; % parameter that A computed: all S1, all S2, smaller of total weights between S1 and S2
-% 
-%                         opts.nonnegativity = true;                                                 % Make sure F is non-negative
-%                         opts.tol = 1.0000e-08;
-%                         res = solver_sLP(C, A, b, mu, [], [], opts);                               % Run the Generic linear programming in standard form. c and b are vectors, A is matrix
-%                         cost = sum(res.*C);                                                        % EMD value
-%                         P = reshape(res,size(f2,1),size(f1,1));                                    % Reshape output
 
-                                                mu = 1;
-                                                for iclu = 1:size(f1,1)
-                                                    for jclu = 1:size(f2,1)
-                                                        x = abs(f1(iclu,1)-f2(jclu,1));
-                                                        z = abs(f1(iclu,2)-f2(jclu,2));
-%                                                         if x<=2 && z<=2
-                                                        C(iclu,jclu) = sqrt((f1(iclu,1)-f2(jclu,1))^2 + (f1(iclu,2)-f2(jclu,2))^2 + (f1(iclu,3)-f2(jclu,3))^2);
-%                                                          else
-%                                                         C(iclu,jclu) = 0;
-%                                                          end
-                                                    end
-                                                end
-                                                C = C';
-                                                C = C(:); % vectorized vertically
-                                                tau = 0.8; %partial parameter
-                                                b = [ones(size(f1,1),1); ones(size(f2,1),1); round(tau*min(size(f1,1), size(f2,1)))]; % parameter that A computed: all S1, all S2, smaller of total weights between S1 and S2
-                                                opts.nonnegativity = true;                                                 % Make sure F is non-negative
-                                                opts.printStopCrit = true;
-                                                %opts.restart =
-                                                %opts.maxCounts = [ Inf, Inf, iteration, Inf, Inf ];
-                                                ind = find(C <= inf);
-                                                C_new = C(ind);
-                                                A = @(X,T) emdConstraints_threshold(X, ind, size(f1,1),size(f2,1),T); % Constraints matrix, T is option, takes value 0, 1, and 2
-                                                res  = solver_sLP_Rplus(C_new, A, b, mu, [], [], opts); % Run the Generic linear programming in standard form. c and b are vectors, A is matrix
-                        
-                                                cost = sum(res.*C_new);                                                        % EMD value
-                                                P = zeros(size(f1,1),size(f2,1));
-                                                P(ind) = res;
-
-
-
+                        [P,cost] = runTfocsMatching(f1,f2,'n');
                         EMD_cost(ich,i) = cost;
                         Pmatrix{ich,i} = P;
                 end
@@ -303,10 +264,14 @@ switch pars.runType %data v.s run
             end
         end
         plot_acc_gt(perIncorrect, emd_gt, EMD_cost);
+        acc_mean = mean(perIncorrect)
 end
 
 % numIncorrect_tfocs_mixed_revised = numIncorrect;
 % save 'C:\Users\labadmin\Desktop\EMD_test_simulator\Algorithm comparison\mixed\tfocs_mixed50_revised.mat' numIncorrect_tfocs_mixed_revised
+
+
+y = [0.12 0.12 12.35; 0.12, 1 22.19; 1.1 56.57 52.14]
 
 
 % ----------------------- Helper functions ----------------------------------------
@@ -369,7 +334,7 @@ for ich = 1:length(pars.change)
         flowfig = quiver3(f1(idx,1), f1(idx,2), f1(idx,3), f2_same(idx,1)-f1(idx,1), f2_same(idx,2)-f1(idx,2), f2_same(idx,3)-f1(idx,3), 'off'); hold off;
         if pars.save == 1
             if ~exist([name], 'dir')
-                    mkdir([name])
+                mkdir([name])
             end
             save ([name,'trial', num2str(i), ',', ' drift=', num2str(pars.y_drift), ' error=', num2str(pars.x_err_std), '&', num2str(pars.y_err_std), '&', num2str(pars.z_err_std), '.mat'], 'f1', 'f2', 'f2_same', 'f2_more', 'loss')
             savefig([name,'trial', num2str(i), ',', ' drift=', num2str(pars.y_drift), ' error=', num2str(pars.x_err_std), '&', num2str(pars.y_err_std), '&', num2str(pars.z_err_std), '.fig'])
@@ -382,6 +347,7 @@ end
 % plot
 function plot_acc_gt(perIncorrect, emd_gt, EMD_cost)
 % compare gt and alg
+figure;
 diff(:,:) = emd_gt - EMD_cost;
 scatter(perIncorrect, diff, 'filled')
 end
@@ -399,18 +365,7 @@ for im = 1:length(idx_same)
 end
 
 switch pars.changeType
-    %     case 'gain'
-    %         for im = 1:length(idx_same)
-    %             emd_match = emd_match + gdf(f2_same(idx_same(im),:), f1(idx_same(im),:));
-    %         end
-    %     case 'loss'
-    %         for im = 1:length(idx_same)
-    %             emd_match = emd_match + gdf(f2_same(idx_same(im),:), f1(idx_same(im),:));
-    %         end
     case 'mixed'
-        %         for im = 1:length(idx_same)
-        %                 emd_match = emd_match + gdf(f1(im,:), f2(idx_same(im),:));
-        %         end
         if f1_nNoMatch > 0 && f2_nNoMatch > 0
             f1_unmatched = f1(loss,:);
             f2_unmatched = f2_more;
@@ -419,16 +374,14 @@ switch pars.changeType
             w4 = ones([f2_nNoMatch,1]);
 
             C2 = gdm(f1_unmatched, f2_unmatched, @gdf);
+            matched_ind2 = [];
+            noMatch2 = [];
 
             switch pars.alg
                 case 'matlab'
-                    [x, fval] = emd(f1_unmatched, f2_unmatched, w3, w4, @gdf);
+                    [x2, fval2] = emd(f1_unmatched, f2_unmatched, w3, w4, @gdf);
+                    P2 = reshape(x2,[length(f2_unmatched),length(f1_unmatched)]);
                 case 'CVX'
-%                     for iclu = 1:length(f1_unmatched)
-%                         for jclu = 1:length(f2_unmatched)
-%                             C2(iclu,jclu) = sqrt((f1_unmatched(iclu,1)-f2_unmatched(jclu,1))^2 + (f1_unmatched(iclu,2)-f2_unmatched(jclu,2))^2 + (f1_unmatched(iclu,3)-f2_unmatched(jclu,3))^2);
-%                         end
-%                     end
                     % Solve
                     tic
                     cvx_begin quiet
@@ -448,12 +401,6 @@ switch pars.changeType
                     stats2.nbr_iter = cvx_slvitr; % the number of iterations taken by the solver
                 case 'TFOCS'
                     mu = 1;
-%                     for iclu = 1:size(f1_unmatched,1)
-%                         for jclu = 1:size(f2_unmatched,1)
-%                             C2(iclu,jclu) = sqrt((f1_unmatched(iclu,1)-f2_unmatched(jclu,1))^2 + (f1_unmatched(iclu,2)-f2_unmatched(jclu,2))^2 + (f1_unmatched(iclu,3)-f2_unmatched(jclu,3))^2);
-%                         end
-%                     end
-%                     C2 = C2(:); % vectorized by col
                     A2 = @(X,T) emdConstraints(X,size(f1_unmatched,1),size(f2_unmatched,1),T); % Constraints matrix, T is option, takes value 0, 1, and 2
                     b2 = [ones(size(f1_unmatched,1),1); ones(size(f2_unmatched,1),1); min(size(f1_unmatched,1), size(f2_unmatched,1))]; % parameter that A computed: all S1, all S2, smaller of total weights between S1 and S2
 
@@ -463,9 +410,14 @@ switch pars.changeType
                     P2 = reshape(res2,size(f1_unmatched,1),size(f2_unmatched,1));                                    % Reshape output
             end
             % for each row, find the max column
-            [~,max_ind2] = max(P2,[],1);
-            for i = 1:min(f1_nNoMatch,f2_nNoMatch)
-                emd_noMatch = emd_noMatch + gdf(f2_unmatched(max_ind2(i),:), f1_unmatched(i,:));
+            P_nz2 = find(sum(P2,1) ~= 0); %find cols with entries
+            [~,max_ind2] = max(P2(:,P_nz2),[],1); %max in every nonzero col
+            matched_ind2(:,1) = P_nz2; %f2 index has match
+            matched_ind2(:,2) = max_ind2; %corresponding f1 index match
+            % find cols with no match
+            noMatch2(:,1) = find(sum(P2,1) == 0); %f2 cols with all zeros
+            for i2 = 1:min([f1_nNoMatch,f2_nNoMatch,size(P_nz2,2)])
+                emd_noMatch = emd_noMatch + gdf(f1_unmatched(max_ind2(i2),:), f2_unmatched(i2,:));
             end
         end
 end
