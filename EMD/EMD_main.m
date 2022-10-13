@@ -3,6 +3,7 @@
 clear all;
 close all;
 
+% CHANGE this to your path
 addpath(genpath('C:\Users\labadmin\Desktop\EMD_test_simulator')) % path to simulator folder
 addpath(genpath('D:\Data\Pipeline\EMD\Localization_EMD_TFOCS')) 
 addpath(genpath('D:\Data\Pipeline\EMD\TFOCS\TFOCS-master')) % TFOCS package
@@ -20,7 +21,7 @@ pars.z_err_std = 1;
 pars.plot = 1;
 pars.save = 1; %0 = not save, 1 = save data
 
-pars.rootD = 'C:\Users\labadmin\Desktop\EMD_test_simulator\'; % the simulated data files are in this folder
+pars.rootD = 'C:\Users\labadmin\Desktop\EMD_test_simulator\'; % the simulated data files are in this folder, CHANGE to your path
 pars.runType = 1; %0 = data generation, 1 = run EMD
 pars.alg = 'TFOCS'; %1 = matlab, 2 = CVX, 3 = TFOCS
 pars.dimension = 3; %2 = '2D', 3 = '3D'
@@ -31,6 +32,7 @@ pars.changeType = 'loss'; %gainloss: 1 = gain, 2 = loss, 3 = mixed
 pars.change = [0.1]; %number of lost/gain points
 pars.lost = 0.1;
 
+% CHANGE to your path name
 switch pars.mode
     case {'standard','lumpiness'}
         name = ['C:\Users\labadmin\Desktop\EMD_test_simulator\data\lost0.2gain0.1\', num2str(pars.dimension),'\', pars.errorType,'\', pars.mode,'\'];
@@ -48,7 +50,9 @@ switch pars.runType %data v.s run
 
         for ich = 1%1:length(pars.change)
             for i = 1:pars.nTrials
+                % 100 points dataset
                 %points = load([name,'trial', num2str(i), ',', ' drift=', num2str(pars.y_drift), ' error=', num2str(pars.x_err_std), '&', num2str(pars.y_err_std), '&', num2str(pars.z_err_std), '.mat']);
+                % 50 points dataset
                 points = load([pars.rootD, pars.mode, '\data\', pars.changeType, '\trial', num2str(i), ',', 'npts', num2str(pars.npts), pars.changeType, num2str(5), ',error=', num2str(pars.x_err_std), '&', num2str(pars.y_err_std),'&', num2str(pars.z_err_std), '.mat']);
 
                 f1 = points.f1;
@@ -79,20 +83,7 @@ switch pars.runType %data v.s run
                         EMD_cost(ich,i) = cost;
                         Pmatrix{ich,i} = P;
                     case 'CVX'
-                        %b = min(min(f1),min(f2)); %shift for any negative values, determined by the smallest point
-                        %                         for iclu = 1:length(f1)
-                        %                             for jclu = 1:length(f2)
-                        %                                 C(iclu,jclu) = sqrt((f1(iclu,1)-f2(jclu,1))^2 + (f1(iclu,2)-f2(jclu,2))^2 + (f1(iclu,3)-f2(jclu,3))^2);
-                        %                             end
-                        %                         end
-                        %                         C = C';
                         C = gdm(f1, f2, @gdf);
-                        % if b < 0
-                        %     x = x + abs(b);
-                        %     x = (x - min(x)) / max(x - min(x)); %normalize x
-                        %     x0 = x0 + abs(b);
-                        %     x0 = (x0 - min(x0)) / max(x0 - min(x0));
-                        % end
 
                         % Solve
                         tic
@@ -151,25 +142,6 @@ switch pars.runType %data v.s run
                         perIncorrect(ich, i) = numIncorrect(ich, i)/(length(f1)+ich);
 
 
-                        %                         correct_dis = zeros(length(matched_ind),1);
-                        %                         for ir = 1:length(matched_ind)
-                        %                             if matched_ind(ir,3) == 0
-                        %                                 matched_ind(ir,4) = sqrt( (f1(matched_ind(ir,2),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,2),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,2),3)-f2(matched_ind(ir,1),3))^2 );
-                        %                                 correct_dis(ir,1) = 0;
-                        %                             elseif matched_ind(ir,2) > length(f1)
-                        %                                 matched_ind(ir,4) = 0;
-                        %                                 correct_dis(ir,1) = sqrt( (f1(matched_ind(ir,3),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,3),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,3),3)-f2(matched_ind(ir,1),3))^2 );
-                        %                             else
-                        %                                 matched_ind(ir,4) = sqrt( (f1(matched_ind(ir,2),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,2),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,2),3)-f2(matched_ind(ir,1),3))^2 );
-                        %                                 correct_dis(ir,1) = sqrt( (f1(matched_ind(ir,3),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,3),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,3),3)-f2(matched_ind(ir,1),3))^2 );
-                        %                             end
-                        %                         end
-                        %                         figure(i)
-                        %                         histogram(matched_ind(:,4),10)
-                        %                         figure(10+i)
-                        %                         histogram(correct_dis)
-
-
 
                     case 'loss'
                         % find nonzero matches
@@ -191,28 +163,6 @@ switch pars.runType %data v.s run
                             numIncorrect(ich, i) = numIncorrect(ich, i) + incorrect_no;
                             perIncorrect(ich, i) = numIncorrect(ich, i)/(length(f1));
                         end
-
-                        %                         correct_dis = zeros(length(matched_ind),1);
-                        %                         for ir = 1:length(matched_ind)
-                        %                             if matched_ind(ir,3) == 0
-                        %                                 matched_ind(ir,4) = sqrt( (f1(matched_ind(ir,2),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,2),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,2),3)-f2(matched_ind(ir,1),3))^2 );
-                        %                                 correct_dis(ir,1) = 0;
-                        %                             elseif matched_ind(ir,2) > length(f1)
-                        %                                 matched_ind(ir,4) = 0;
-                        %                                 correct_dis(ir,1) = sqrt( (f1(matched_ind(ir,3),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,3),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,3),3)-f2(matched_ind(ir,1),3))^2 );
-                        %                             else
-                        %                                 matched_ind(ir,4) = sqrt( (f1(matched_ind(ir,2),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,2),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,2),3)-f2(matched_ind(ir,1),3))^2 );
-                        %                                 correct_dis(ir,1) = sqrt( (f1(matched_ind(ir,3),1)-f2(matched_ind(ir,1),1))^2 + (f1(matched_ind(ir,3),2)-f2(matched_ind(ir,1),2))^2 + (f1(matched_ind(ir,3),3)-f2(matched_ind(ir,1),3))^2 );
-                        %                             end
-                        %                         end
-                        %                         figure(i)
-                        %                         histogram(matched_ind(:,4),10)
-                        %                         figure(10+i)
-                        %                         histogram(correct_dis)
-
-
-
-
 
 
                     case 'mixed'
