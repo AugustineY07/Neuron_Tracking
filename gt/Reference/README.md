@@ -1,4 +1,8 @@
 reference_4day.mat contains the reference matching pairs by include clusters that passes the KW significance test, has simScore > 1, and has no duplicated pair.  
+Each cell col is a shank from 1-4  
+Each cell row is the matching between two consecutive days  
+  
+Within each cell:  
 column 1: idx from the second day in clusters that passes KW test  
 column 2: idx from the first day in clusters that passes KW test  
 column 3: simScore(ranked from high to low)  
