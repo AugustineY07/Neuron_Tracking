@@ -8,14 +8,20 @@ day = input_struct.day;
 shank = input_struct.shank;
 z_mode = pair_output.z_mode;
 ref_path = input_struct.ref_path;
+compare = input_struct.compare;
 
 
 % load data
 load(psth_data);
 load(clu_data);
 ref_pair_mode = [];
-file_name = [input_struct.subject,'d1',num2str(id+1),'sh',num2str(ish),'_',stage,'_reference_4day_d1based.mat'];
 
+switch compare
+    case '1-based'
+        file_name = [input_struct.subject,'d1',num2str(id+1),'sh',num2str(ish),'_',stage,'_reference_4day_d1based.mat'];
+    otherwise
+        file_name = [input_struct.subject,'d',num2str(id), 'd', num2str(id+1),'sh',num2str(ish),'_',stage,'_reference_4day_',compare,'.mat'];
+end
 
 numClu = simScore_sig{id,ish}; %simScore: day1*day2
 fprintf('Looking for match between day %d and %d shank %d \n', id+1, 1, ish)
@@ -36,7 +42,12 @@ for iclu = 1:size(numClu,2) %num in day 2/col
     top{id,ish,iclu}(:,2) = idxRank(1:n,1); %row number in the original(not sim_score sorted) order
 
     self = good_clu_KW{id+1,ish}(iclu,3:4); %location of current channel
-    dist = sqrt((self(1)-good_clu_KW{1,ish}(:,3)).^2 + (self(2)-good_clu_KW{1,ish}(:,4)).^2);
+    switch compare
+        case '1-based'
+            dist = sqrt((self(1)-good_clu_KW{1,ish}(:,3)).^2 + (self(2)-good_clu_KW{1,ish}(:,4)).^2);
+        case 'next'
+            dist = sqrt((self(1)-good_clu_KW{id,ish}(:,3)).^2 + (self(2)-good_clu_KW{id,ish}(:,4)).^2);
+    end
     neighbor = find(dist <= max_dist); %all sorted index of 'neighbors'
 
     % check if neighbors contains at least 1 high simScore cluster and declare match:
@@ -58,8 +69,14 @@ for iclu = 1:size(numClu,2) %num in day 2/col
 
         match{id,ish}(iclu,1) = iclu; %cluster row idx in day2
         match{id,ish}(iclu,5) = good_clu_KW{id+1,ish}(iclu,1); %cluster label in day2
-        match{id,ish}(iclu,6) = good_clu_KW{1,ish}(match{id,ish}(iclu,2),1); %cluster label in day1
-        match{id,ish}(iclu,7) = self(2) - good_clu_KW{1,ish}(match{id,ish}(iclu,2),4); % distance between the pair
+        switch compare
+            case '1-based'
+                match{id,ish}(iclu,6) = good_clu_KW{1,ish}(match{id,ish}(iclu,2),1); %cluster label in day1
+                match{id,ish}(iclu,7) = self(2) - good_clu_KW{1,ish}(match{id,ish}(iclu,2),4); % distance between the pair
+            case 'next'
+                match{id,ish}(iclu,6) = good_clu_KW{id,ish}(match{id,ish}(iclu,2),1);
+                match{id,ish}(iclu,7) = self(2) - good_clu_KW{id,ish}(match{id,ish}(iclu,2),4); 
+        end
     else
         match{id,ish}(iclu,:) = NaN;
     end
