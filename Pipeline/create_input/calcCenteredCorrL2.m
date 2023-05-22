@@ -14,7 +14,6 @@ pp_all_2 = squeeze(max(mw2,[],2)-min(mw2,[],2));
 [pp_unit_1, pk_chan_1] = max(pp_all_1);
 [pp_unit_2, pk_chan_2] = max(pp_all_2);
 
-
 % probe geometry, np 2.0 specific
 minZ = min(chanPos(:,2));
 maxZ = max(chanPos(:,2));
@@ -34,7 +33,7 @@ corrVals = zeros([11,1]); % to accumulate corrlation values across tshifts
     cl2 = 0;        %fo summing L2 norm
     nSite = 0;
     for i = 1:numel(zIncl(1,:))
-        % specfic to 2 column arrangement of sites
+        % specific to 2 column arrangement of sites
         currZ = [zIncl(1,i), zIncl(1,i) + dZ];
         % up to two sites, for the two columns
         cc1 = find(ismember(chanPos(:,2),currZ(1)));
@@ -57,7 +56,6 @@ corrVals = zeros([11,1]); % to accumulate corrlation values across tshifts
 centCorr = cv/nSite;
 centL2 = cl2/nSite;
 end
-
 
 
 
