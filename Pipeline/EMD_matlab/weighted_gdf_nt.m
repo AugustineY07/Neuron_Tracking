@@ -1,4 +1,4 @@
-function [E] = weighted_gdf_nt(V1, V2, mw1, mw2, chan_pos, dim_mask, l2_weight)
+function [E,L2] = weighted_gdf_nt(V1, V2, mw1, mw2, chan_pos, dim_mask, l2_weight)
 %
 % GDF   Ground distance between two vectors
 %    [E] = GDF(F1, F2) is the ground distance between two feature vectors.
@@ -54,13 +54,14 @@ V2 = V2(dim_mask(1:9));
 
 w = dim_weights(dim_mask(1:9));
 diffsq = (V2 - V1).^2;
-if dim_mask(10)
+if dim_mask(10) ~= 0
     % calculate l2 distance between these waveforms
     [~,wave_l2] = calcCenteredCorrL2(mw1,mw2, chan_pos, 5);
     diffsq = [diffsq,wave_l2^2];
-    w = [w,dim_weights(10)];
+    w = [w,dim_weights(10)]; %weights for all parameters
 end
 
 E = sqrt(dot(diffsq,w));
+[~,L2] = calcCenteredCorrL2(mw1,mw2, chan_pos, 5);
 
 end

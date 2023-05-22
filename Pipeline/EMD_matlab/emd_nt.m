@@ -1,4 +1,4 @@
-function [x, fval] = emd_nt(F1, F2, W1, W2, mw1, mw2, chan_pos, dim_mask, l2_weight, Func)
+function [x, fval, L2] = emd_nt(F1, F2, W1, W2, mw1, mw2, chan_pos, dim_mask, l2_weight, Func)
 % NT = "Neuron tracking" specialized version of EMD (info below)
 % Addition parameters are:
 % mw1, mw2: (nUnit x nSite) arrays, mean waveforms for the units included in F1 and F2
@@ -42,7 +42,7 @@ function [x, fval] = emd_nt(F1, F2, W1, W2, mw1, mw2, chan_pos, dim_mask, l2_wei
 %
 
 % ground distance matrix
-f = gdm_nt(F1, F2, mw1, mw2, chan_pos, dim_mask, l2_weight, Func);
+[f,L2] = gdm_nt(F1, F2, mw1, mw2, chan_pos, dim_mask, l2_weight, Func);
 
 % number of feature vectors
 [m a] = size(F1);
