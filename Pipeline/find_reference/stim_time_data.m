@@ -3,8 +3,8 @@ function stim_time_data(input_struct)
 % output: sorted_response.mat
 
 input_path = fullfile(input_struct.rootpath,input_struct.subject);
-output_path = input_struct.ref_path;
-out_name = [input_struct.subject,'_stimulus_times.mat'];
+output_path = input_struct.rf_path;
+out_name = input_struct.stimulus_data;
 day = input_struct.day;
 
 % read in stimulus data

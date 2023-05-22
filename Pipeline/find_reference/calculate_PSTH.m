@@ -4,11 +4,12 @@ function calculate_PSTH(input_struct)
 
 day = input_struct.day;
 shank = input_struct.shank;
-input_path = input_struct.ref_path;
-output_path = input_struct.ref_path;
+input_path = input_struct.rf_path;
+output_path = input_struct.rf_path;
 rootpath = input_struct.sorting_path;
-input_name = [input_struct.subject,'_stimulus_times.mat'];
-output_name = [input_struct.subject,'_PSTH.mat'];
+input_name = input_struct.stimulus_data;
+output_name = input_struct.psth_data;
+
 
 stimulus = load(fullfile(input_path, input_name)).sorted_response; %stimulus_id:presention_time_s:presention_time_ms
 day_label = load(fullfile(input_path, input_name)).day_label;
@@ -33,7 +34,7 @@ for id = 1:day
         data = readtable(csv);
         fprintf('Finish data reading day %d shank %d. \n', id, id1);
 
-        idx_good = [1:1:size(data,1)];
+        idx_good = [1:1:size(data,1)]; %include all clusters 
 
         good_clu(id,id1).clu = data.cluster_id(idx_good)+1; %zero-index to 1-index
         good_clu(id,id1).amp = data.amplitude(idx_good);
@@ -116,6 +117,7 @@ for id = 1:day
                 end
             end
         end
+        PSTH_mean{id,id1} = sum(PSTHByCluster,2)/(size(stimulus,2)*1.8*num_stim); %mean PSTH normalize by trial and time
         PSTHave = PSTHByCluster/(size(stimulus,2)*num_stim); %normalize by trial and image
         %PSTHcountByStimuli{id,id1} = PSTHave;
         PSTHsmooth = filter(smooth,1,PSTHave,[],2); %gaussian smooth along bins/columns
@@ -139,4 +141,4 @@ end
 % [ax,h2]=suplabel('Shanks','y');
 % set(h2,'FontSize',20)
 
-save(fullfile(output_path,output_name),'good_clu', 'rsp', 'rspByTrial', 'PSTHsmoothed');
+save(fullfile(output_path,output_name),'good_clu', 'rsp', 'rspByTrial', 'PSTHsmoothed', 'PSTH_mean');
