@@ -5,16 +5,18 @@ addpath(genpath('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline'));
 
 % ----------------- User input: path -----------------
 input_struct.rootpath = 'Z:\'; %all data
-input_struct.subject = 'AL036';
+input_struct.subject = 'AL032';
 input_struct.sorting_path = ['Z:\',input_struct.subject,'_out\results'];
-input_struct.EMD_input_dir = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\EMD_input'; %stores EMD input pre-correction
-input_struct.ref_path = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\reference'; %path to save reference results
-input_struct.psth_data = fullfile(input_struct.ref_path,[input_struct.subject,'_PSTH.mat']);
-input_struct.output_dir = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\output';
+input_struct.rf_path = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\reference'; %get visual response data
+input_struct.ref_path = ['C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\reference\',[input_struct.subject, '_allPossible']]; %path to save reference results
+input_struct.stimulus_data = [input_struct.subject,'_stimulus_times.mat'];
+input_struct.psth_data = [input_struct.subject,'_PSTH.mat'];
+input_struct.output_dir = fullfile('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\output',[input_struct.subject,'_allPossible']);
 
 % ----------------- User input: setting -----------------
-input_struct.day = 7; %number of days to be compared, 5, 5, 7
+input_struct.day = 5; %number of days to be compared, 5, 5, 7
 input_struct.shank = 4; %number of shanks
+input_struct.start_day = 1; 
 if input_struct.day < 2
     error('Need at least 2 days.');
 elseif isinteger(input_struct.day)
@@ -24,8 +26,8 @@ input_struct.plot_mask = logical([0,0,0,0,0]);
 %input_struct.plot_mask = logical([1,1,1,1,1]); %plot order: plot_ref_hist, plot_ref_match, plot_KSgood_hist, plot_KSgood_ref_hist, plot_KSgood_match_hist
 
 % ----------------- Set to default, can change if necessary -----------------
-input_struct.n = 8; %ref parameter: sim_score range
-input_struct.max_dist = 36; %ref parameter: um, 8 possible sites
+% input_struct.n = 8; %ref parameter: sim_score range
+input_struct.max_dist = 30; %ref parameter: um, 8 possible sites
 %input_struct.dim_mask = logical([1,1,1,0,0,0,0,0,0,0]);   %for just position
 input_struct.dim_mask = logical([1,1,1,0,0,0,0,0,0,1]);   %for positions + waveform l2
 %input_struct.dim_mask = logical([0,0,0,0,0,0,0,0,0,1]);    %for just wf
@@ -34,19 +36,17 @@ input_struct.dim_mask_corrected = logical([1,1,1,0,0,0,0,0,0,1]);   %for positio
 %input_struct.dim_mask_corrected = logical([0,0,0,0,0,0,0,0,0,1]);
 input_struct.location = 'wf'; %'wf'; %'Boussard';
 input_struct.mode_est_method = 'single'; %'single'; 'merge'
-input_struct.compare = 'next'; %'1-based', 'next'
-input_struct.l2_weights = 0;
+input_struct.compare = '';
+input_struct.l2_weights = 1500;
 all_l2_weights = [1500];
+input_struct.clu_data = [input_struct.subject,'_vfp_',num2str(input_struct.start_day),'.mat'];%,num2str(input_struct.start_day)
+input_struct.EMD_input_dir = fullfile('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\EMD_input\',[input_struct.subject,'_allPossible']); %stores EMD input pre-correction
 
 %input_struct.corr_method = 'direct'; %correction by 'row' or 'direct'
 %input_struct.ref_criterion = 'KS_good'; %'amp'
 %input_struct.drift_est_method = 'kernel'; %'kernel'; %'mode';, 'mode_allShank', need to remove
-switch input_struct.compare
-    case '1-based'
-        input_struct.clu_data = fullfile(input_struct.ref_path,[input_struct.subject,'_vfp.mat']); %reference data path
-    otherwise
-        input_struct.clu_data = fullfile(input_struct.ref_path,[input_struct.subject,'_vfp_',input_struct.compare,'.mat']); %reference data path
-end
+
+
 
 
 %% Pre correction
@@ -81,27 +81,26 @@ for iw = 1:length(all_l2_weights)
 
 
     %
-    if ~exist(fullfile(input_struct.ref_path, [input_struct.subject,'_stimulus_times.mat']),'file')
+    if ~exist(fullfile(input_struct.rf_path, [input_struct.subject,'_stimulus_times.mat']),'file')
         stim_time_data(input_struct);
         calculate_PSTH(input_struct);
         vfp_KW(input_struct);
     end
-    input_struct.day_label = load(fullfile(input_struct.ref_path, [input_struct.subject,'_stimulus_times.mat'])).day_label;
+    input_struct.day_label = load(fullfile(input_struct.rf_path,input_struct.stimulus_data)).day_label;
 
     % loop all days and shanks
     d = dir(input_struct.sorting_path); %list all files in directory
     d = d([d.isdir]); %list sub-directories only
     d = d(~ismember({d.name},{'.', '..'})); %exclude . and .. directories
-    for id = 1:input_struct.day-1
-        switch input_struct.compare
-            case '1-based'
-                fday1 = fullfile(input_struct.sorting_path, d(find(contains({d.name},input_struct.day_label(1)))).name); % all compare to d1
-            case 'next'
-                date1 = input_struct.day_label(id);
-                idx1 = find(contains({d.name},date1));
-                fday1 = fullfile(input_struct.sorting_path, d(find(contains({d.name},input_struct.day_label(id)))).name); % all compare to the next day
-        end
-        date = input_struct.day_label(id+1);
+    for id = input_struct.start_day+1:input_struct.day
+        fday1 = fullfile(input_struct.sorting_path, d(find(contains({d.name},input_struct.day_label(input_struct.start_day)))).name);
+%         switch input_struct.compare
+%             case '1-based'
+%                 fday1 = fullfile(input_struct.sorting_path, d(find(contains({d.name},input_struct.day_label(1)))).name); % all compare to d1
+%             case 'next'
+%                 fday1 = fullfile(input_struct.sorting_path, d(find(contains({d.name},input_struct.day_label(id)))).name); % all compare to the next day
+%         end
+        date = input_struct.day_label(id);
         idx = find(contains({d.name},date));
         fday2 = fullfile(input_struct.sorting_path, d(idx).name);
         dday1 = dir(fday1);
@@ -111,13 +110,14 @@ for iw = 1:length(all_l2_weights)
         dday2 = dday2([dday2.isdir]);
         dday2 = dday2(~ismember({dday2.name},{'.', '..'}));
         for ish = 1:input_struct.shank %4 shanks
-            switch input_struct.compare
-                case '1-based'
-                    pair_output.d1 = cell2mat(input_struct.day_label(1)); 
-                case 'next'
-                    pair_output.d1 = cell2mat(input_struct.day_label(id));
-            end
-            pair_output.d2 = cell2mat(input_struct.day_label(id+1));
+%             switch input_struct.compare
+%                 case '1-based'
+%                     pair_output.d1 = cell2mat(input_struct.day_label(1)); 
+%                 case 'next'
+%                     pair_output.d1 = cell2mat(input_struct.day_label(id));
+%             end
+            pair_output.d1 = cell2mat(input_struct.day_label(input_struct.start_day));
+            pair_output.d2 = cell2mat(input_struct.day_label(id));
             % Find reference set
             [output_struct,pair_output] = find_reference(input_struct,'pre',output_struct,pair_output,id,ish);
             % plot reference pairs
@@ -131,28 +131,35 @@ for iw = 1:length(all_l2_weights)
             locdir2 = [fname2,'\Localization\position_results_files_merged'];
             
             % set filenames
-            switch input_struct.compare
-                case '1-based'
-                    EMD_input_name = ['d',num2str(id+1),'d1_sh',num2str(ish-1),'_locwf_emd_input.mat']; %d1_based
-                    matched_filename = ['d',num2str(id+1),'d1_sh',num2str(ish-1),'_locwf_emd_output.mat'];
-                    EMD_input_name_corrected = ['d',num2str(id+1),'d1_sh',num2str(ish-1),'_locwf_emd_input_corrected.mat']; %d1_based
-                    matched_filename_corrected = ['d',num2str(id+1),'d1_sh',num2str(ish-1),'_locwf_emd_output_corrected.mat'];
-                    pairout_name = [input_struct.subject,'d1',num2str(id+1),'sh',num2str(ish),'_pair_output_',num2str(all_l2_weights(iw)),'.mat'];
-                case 'next'
-                    EMD_input_name = ['d',num2str(id+1),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_input.mat'];
-                    matched_filename = ['d',num2str(id+1),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_output.mat'];
-                    EMD_input_name_corrected = ['d',num2str(id+1),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_input_corrected.mat']; %d1_based
-                    matched_filename_corrected = ['d',num2str(id+1),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_output_corrected.mat'];
-                    pairout_name = [input_struct.subject,'d',num2str(id),'d',num2str(id+1),'sh',num2str(ish),'_pair_output_',num2str(all_l2_weights(iw)),'.mat'];
-            end
+            EMD_input_name = ['d',num2str(input_struct.start_day),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_input.mat'];
+            matched_filename = ['d',num2str(input_struct.start_day),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_output.mat'];
+            EMD_input_name_corrected = ['d',num2str(input_struct.start_day),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_input_corrected.mat']; 
+            matched_filename_corrected = ['d',num2str(input_struct.start_day),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_output_corrected.mat'];
+
+            pairout_name = [input_struct.subject,'_d',num2str(input_struct.start_day),'d',num2str(id),'sh',num2str(ish),'_pair_output_',num2str(all_l2_weights(iw)),'.mat'];
+%             switch input_struct.compare
+%                 case '1-based'
+%                     EMD_input_name = ['d',num2str(id),'d1_sh',num2str(ish-1),'_locwf_emd_input.mat']; %d1_based
+%                     matched_filename = ['d',num2str(id),'d1_sh',num2str(ish-1),'_locwf_emd_output.mat'];
+%                     EMD_input_name_corrected = ['d',num2str(id),'d1_sh',num2str(ish-1),'_locwf_emd_input_corrected.mat']; %d1_based
+%                     matched_filename_corrected = ['d',num2str(id),'d1_sh',num2str(ish-1),'_locwf_emd_output_corrected.mat'];
+%                     pairout_name = [input_struct.subject,'d1',num2str(id),'sh',num2str(ish),'_pair_output_',num2str(all_l2_weights(iw)),'.mat'];
+%                 case 'next'
+%                     EMD_input_name = ['d',num2str(id),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_input.mat'];
+%                     matched_filename = ['d',num2str(id),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_output.mat'];
+%                     EMD_input_name_corrected = ['d',num2str(id),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_input_corrected.mat']; %d1_based
+%                     matched_filename_corrected = ['d',num2str(id),'d',num2str(id),'_sh',num2str(ish-1),'_locwf_emd_output_corrected.mat'];
+%                     pairout_name = [input_struct.subject,'d',num2str(id),'d',num2str(id),'sh',num2str(ish),'_pair_output_',num2str(all_l2_weights(iw)),'.mat'];
+%             end
 
             % create input file for EMD correction
-            EMD_input(input_struct, output_struct, pair_output, phydir1, phydir2, locdir1, locdir2, EMD_input_name,'pre',ish, id);
+            EMD_input(input_struct, output_struct, pair_output, phydir1, phydir2, locdir1, locdir2, EMD_input_name,'pre',input_struct.start_day,id);
+
             % plot reference pair and KSgood units
             plot_ref_match(input_struct,EMD_input_name,'pre',id,ish);
 
             % Run EMD to find correction amount
-            pair_output = EMD_match(input_struct,pair_output,EMD_input_name,matched_filename,'pre',id,ish);
+            pair_output = EMD_match(input_struct,pair_output,EMD_input_name,matched_filename,'pre');
             plot_ref_match(input_struct, matched_filename,'pre',id,ish); %plot matched
 
             % estimate and plot histograms
@@ -182,11 +189,12 @@ for iw = 1:length(all_l2_weights)
             plot_ref_hist(input_struct,pair_output, 'post', id, ish);
 
             % create input file for EMD correction
-            EMD_input(input_struct, output_struct, pair_output, phydir1, phydir2, locdir1, locdir2, EMD_input_name_corrected,'post',ish, id);
+            EMD_input(input_struct, output_struct, pair_output, phydir1, phydir2, locdir1, locdir2, EMD_input_name_corrected,'post',input_struct.start_day,id);
+
             % plot reference pair and KSgood units
             plot_ref_match(input_struct,EMD_input_name_corrected,'post',id,ish);
 
-            pair_output = EMD_match(input_struct,pair_output,EMD_input_name_corrected,matched_filename_corrected,'post',id,ish);
+            pair_output = EMD_match(input_struct,pair_output,EMD_input_name_corrected,matched_filename_corrected,'post');
             plot_ref_match(input_struct, matched_filename,'pre',id,ish); %plot matched
 
             [diffZ_post,edges_post] = z_estimate(input_struct.EMD_input_dir, matched_filename_corrected);
