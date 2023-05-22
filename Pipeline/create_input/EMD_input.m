@@ -1,19 +1,31 @@
-function EMD_input(input_struct, output_struct, pair_output, phydir1, phydir2, locdir1, locdir2, input_name,stage,ish, id)
+function EMD_input(input_struct, output_struct, pair_output, phydir1, phydir2, locdir1, locdir2, input_name,stage,start_day,id)
 
 EMD_input_dir = input_struct.EMD_input_dir;
 localization = input_struct.location;
-all_z_mode = pair_output.z_mode;
+ref_path = input_struct.ref_path;
+rf_path = input_struct.rf_path;
+subject = input_struct.subject;
+
+% start_day = input_struct.start_day
 switch stage
     case 'pre'
-        fullpath = pair_output.ref_filename_pre;
+        fullpath = fullfile(ref_path, pair_output.ref_filename_pre);
+        ref_name = pair_output.ref_filename_pre;
+        all_z_mode = 0;
     case 'post'
-        fullpath = pair_output.ref_filename_post;
+        fullpath = fullfile(ref_path, pair_output.ref_filename_post);
+        ref_name = pair_output.ref_filename_post;
+        all_z_mode = pair_output.z_mode;
 end
 
 % 1 to include only units that pass KSlabel = good; keep set to 1 for now
 bUseKSlabel = 1;
 
 % get ks calls for each day
+% fullpath = fullfile(phydir1,'cluster_KSLabel.tsv');
+% kscall1 = ks_call;
+% fullpath = fullfile(phydir2,'cluster_KSLabel.tsv');
+% kscall2 = ks_call;
 kscall1 = readKS2label(fullfile(phydir1,'cluster_KSLabel.tsv'));
 kscall2 = readKS2label(fullfile(phydir2,'cluster_KSLabel.tsv'));
 
@@ -21,6 +33,27 @@ kscall2 = readKS2label(fullfile(phydir2,'cluster_KSLabel.tsv'));
 chan_pos = readNPY(fullfile(phydir1,'channel_positions.npy'));
 mw1 = readNPY(fullfile(phydir1, 'ksproc_mean_waveforms.npy'));
 mw2 = readNPY(fullfile(phydir2, 'ksproc_mean_waveforms.npy'));
+
+switch subject
+    case 'AL031'
+%         start_day = input_struct.start_day;
+    load(fullfile(ref_path,ref_name));
+    load(fullfile(rf_path,[subject,'_PSTH.mat']));
+    %first day
+    clu_label = ref(:,6); %get all clu label of ref units
+    [~,same_idx1,~] = intersect(good_clu(start_day).clu, clu_label, 'stable');%get all clu idx in 'good_clu'
+    y_loc = good_clu(start_day).y(same_idx1); %get y location of these channels
+    y_lim = [min(y_loc) max(y_loc)];
+
+    %second day
+    clu_label2 = ref(:,5); %get all clu label of ref units
+    [~,same_idx2,~] = intersect(good_clu(id).clu, clu_label2, 'stable');%get all clu idx in 'good_clu'
+    y_loc2 = good_clu(id).y(same_idx2); %get y location of these channels
+    y_lim2 = [min(y_loc2) max(y_loc2)];
+
+end
+
+
 
 wm1 = wave_metrics(mw1, chan_pos, 'pre',all_z_mode);
 switch localization
@@ -47,11 +80,12 @@ metrics_ind = [9,10,11,1,3,4,5,6,8];
 %  metric_weights -- [nDim x 1] array of estimated error for each dimension
 %  dim_mask = number of dimensions to include, e.g. just position or position + metrics
 if ~isempty(fullpath)
-    pairs = load(fullpath).ref_day1based;
+    pairs = load(fullpath).ref; 
     [npair, ~] = size(pairs);
 else
     npair = 0;
 end
+
 
 [npts_f1,~] = size(wm1);
 [npts_f2,~] = size(wm2);
@@ -84,6 +118,30 @@ switch localization
         f2(:,1:3) = cent2(:,:); % from single spike localizations
 
     case 'wf'
+        switch subject
+            case 'AL031'
+                f1_idx = find(wm1(:,metrics_ind(2))<=y_lim(2) & wm1(:,metrics_ind(2))>=y_lim(1));
+                f2_idx = find(wm2(:,metrics_ind(2))<=y_lim(2) & wm2(:,metrics_ind(2))>=y_lim(1));
+                wm1 = wm1(f1_idx,:);
+                wm2 = wm2(f2_idx,:);
+                kscall1 = kscall1(f1_idx,:);
+                kscall2 = kscall2(f2_idx,:);
+                [npts_f1,~] = size(wm1);
+                [npts_f2,~] = size(wm2);
+                f1 = zeros([npts_f1,nDim]);
+                f2 = zeros([npts_f2,nDim]);
+                mw1 = mw1(f1_idx,:,:);
+                mw2 = mw2(f2_idx,:,:);
+                clu1 = readtable(fullfile(phydir1,'metrics.csv')).cluster_id+1;
+                clu2 = readtable(fullfile(phydir2,'metrics.csv')).cluster_id+1;
+                f1_idx_conversion(:,1) = [1:1:length(f1)]; %new idx after unit filtering
+                [~,f1_idx_conversion(:,2),~] = intersect(clu1,f1_idx,'stable'); %old idx correponds to cluster idx 
+                f1_idx_conversion(:,3) = f1_idx; %cluster label
+                f2_idx_conversion(:,1) = [1:1:length(f2)];
+                f2_idx_conversion(:,2) = f2_idx;
+                [~,f2_idx_conversion(:,2),~] = intersect(clu2,f2_idx,'stable'); %cluster label
+                f2_idx_conversion(:,3) = f2_idx;
+        end
         %load wf-fit locations
         f1(:,1:3) = wm1(:,metrics_ind(1:3));
         f2(:,1:3) = wm2(:,metrics_ind(1:3));
@@ -120,24 +178,40 @@ mw2 = mw2(good_unit_2,:,:);
 f2_same_ind = nan([length(f1),1]);
 f1_labels = find(good_unit_1);
 f2_labels = find(good_unit_2);
+
 for i = 1:npair
     % check that the units in day 1 and day 2 are called as good
     f1_label = pairs(i,6);
     f2_label = pairs(i,5);
-    if (ismember(f1_label,f1_good_orig) && ismember(f2_label, f2_good_orig))
-        f1_new = find(f1_good_orig == f1_label);
-        f2_new = find(f2_good_orig == f2_label);
-        f2_same_ind(f1_new) = f2_new;
+    switch subject
+        case 'AL031'
+            if (ismember(f1_label,f1_idx_conversion(f1_good_orig,3)) && ismember(f2_label, f2_idx_conversion(f2_good_orig,3)))
+                f1_new = find(f1_idx_conversion(f1_good_orig,3) == f1_label);
+                f2_new = find(f2_idx_conversion(f2_good_orig,3) == f2_label);
+                f2_same_ind(f1_new) = f2_new;
+            end
+        otherwise
+            if (ismember(f1_label,f1_good_orig) && ismember(f2_label, f2_good_orig))
+                f1_new = find(f1_good_orig == f1_label);
+                f2_new = find(f2_good_orig == f2_label);
+                f2_same_ind(f1_new) = f2_new;
+            end
     end
 end
+
+
 
 % will be stored in phydir 2
 if ~exist(EMD_input_dir, 'dir')
     mkdir(EMD_input_dir);
 end
-save(fullfile(EMD_input_dir,input_name), 'f1', 'f2', 'f2_same_ind', 'mw1', 'mw2','chan_pos','f1_labels','f2_labels');
+switch subject
+    case 'AL031'
+        save(fullfile(EMD_input_dir,input_name), 'f1', 'f2', 'f2_same_ind', 'mw1', 'mw2','chan_pos','f1_labels','f2_labels','f1_idx_conversion','f2_idx_conversion');
+    otherwise
+        save(fullfile(EMD_input_dir,input_name), 'f1', 'f2', 'f2_same_ind', 'mw1', 'mw2','chan_pos','f1_labels','f2_labels');
 end
-
+end
 
 
 
