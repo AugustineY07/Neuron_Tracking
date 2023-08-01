@@ -1,21 +1,8 @@
 # Neuron_Tracking
-This repositor keeps track of working progress of the project: "Neuron Tracking with Chronic NP2.0 Recordings from Mouse Visual Cortex".
+This repositor contains the code used for the manuscript: "Multi-day Neuron Tracking in High Density Electrophysiology Recordings using EMD".
 
-Goal:  
-Match neurons in chronic NP2.0 recordings after spike sorting using cluster location, spiking amplitude, template similarity and cluster spread difference. 
+Directories:
+- Pipeline: code for tracking neurons
+- Example: example code with 5 datasets from animal AL032
+- Figure: code for reproducing figures in the manuscript
 
-Data:  
-1. Simulation data 
-2. Neuropixels 2.0 Elctrophysiology Recording 
-
-Method:  
-3D Localization + EMD
-
-Details:  
-1. The folder "mixed" contains simulated data with simutaneous adding and dropping points  
-2. computeSTAT.m calculates averaged template waveforms  
-3. EMD_main.m generates and/or find matching pairs with simulation data using EMD algorithm   
-    - EMD package: matlab, CVX, TFOCS  
-    - Dimension: 2D or 3D points  
-    - Error of spike cluster estimation: 'Pos' = error in squared space, 'xyz' = error in a rectangle space  
-    - Mode: how points are gegerated, 'standard' = uniform, 'lumpiness' = density differ by y-location, 'gainloss' = adding and/or dropping points   
