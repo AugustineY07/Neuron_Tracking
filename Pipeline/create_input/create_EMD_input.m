@@ -1,21 +1,23 @@
 function output = create_EMD_input(input, output, wf_metrics1, wf_metrics2, mwf1, mwf2, stage)
 
 input_path = input.input_path;
-input_name = input.input_name;
 EMD_input_dir = input.EMD_path;
 data_path1 = input.data_path1;
 data_path2 = input.data_path2;
 chan_pos_name = input.chan_pos_name;
-%wf_name = input.wf_name;
 KSLabel_name = input.KSLabel_name;
 v = input.validation;
+all_z_mode = output.z_mode;
 
-% switch stage
-%     case 'pre'
-%         all_z_mode = 0;
-%     case 'post'
-        all_z_mode = output.all_z_mode;
-% end
+% output path
+switch stage
+    case 'pre'
+        input_name = input.input_name;
+    case 'post'
+        input_name = input.input_name_post;
+end
+out_fullpath = fullfile(EMD_input_dir, input_name);
+
 
 % 1 to include only units that pass KSlabel = good; keep set to 1 for now
 bUseKSlabel = 1;
@@ -120,9 +122,9 @@ if ~exist(EMD_input_dir, 'dir')
     mkdir(EMD_input_dir);
 end
 if v == 1
-    save(fullfile(EMD_input_dir,input_name), 'f1', 'f2', 'f2_same_ind', 'mw1', 'mw2','chan_pos','f1_labels','f2_labels');
+    save(out_fullpath, 'f1', 'f2', 'f2_same_ind', 'mw1', 'mw2','chan_pos','f1_labels','f2_labels');
 else
-    save(fullfile(EMD_input_dir,input_name), 'f1', 'f2', 'mw1', 'mw2','chan_pos','f1_labels','f2_labels');
+    save(out_fullpath, 'f1', 'f2', 'mw1', 'mw2','chan_pos','f1_labels','f2_labels');
 end
 end
 
