@@ -8,8 +8,8 @@ Directories:
 - Figure: code for reproducing figures in the manuscript
 
 1. Pipeline
-NT_main.m
-Goal: 
+NT_main.m  
+Goal:   
 Input: Kilosort cluster label, channel map, mean waveforms(preprocessed with ecephys_spike_sorting repo)  
 Output: Unit match assignment  
 Documentation:  
