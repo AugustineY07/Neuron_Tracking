@@ -3,8 +3,8 @@ This repositor contains the code used for the manuscript: "Multi-day Neuron Trac
 All features are implemented in MATLAB R2021b.
 
 ## Required packages:  
-⋅⋅* npy-matlab(https://github.com/kwikteam/npy-matlab): need for accessing .npy files  
-⋅⋅* JRClust(https://github.com/jenniferColonell/JRCLUST): need for sorted dataset post-processing  
+* npy-matlab(https://github.com/kwikteam/npy-matlab): need for accessing .npy files
+* JRClust(https://github.com/jenniferColonell/JRCLUST): need for sorted dataset post-processing  
 
 ## Directories:
 - Pipeline: code for tracking neurons
