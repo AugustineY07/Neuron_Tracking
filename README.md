@@ -2,16 +2,18 @@
 This repositor contains the code used for the manuscript: "Multi-day Neuron Tracking in High Density Electrophysiology Recordings using EMD".
 All features are implemented in MATLAB R2021b.
 
-Required packages:  
+## Required packages:  
 1. npy-matlab(https://github.com/kwikteam/npy-matlab): need for accessing .npy files  
 2. JRClust(https://github.com/jenniferColonell/JRCLUST): need for sorted dataset post-processing  
 
-Directories:
+## Directories:
 - Pipeline: code for tracking neurons
 - Example: example code with 5 datasets from animal AL032
-- Figure: code for reproducing figures in the manuscript
+- Figure: code for reproducing figures in the manuscript  
 
-1. Pipeline  
+
+
+### 1. Pipeline  
 
 Function 1 - NT_main.m  
 Goal: Match units between 2 datasets.    
@@ -34,7 +36,7 @@ output.results_wth = unit assignment with threshold applied
   
 
     
-2. Example
+### 2. Example
 Function - Example_run.m  
 Goal: Demonstrate an example with 5 datasets
 Input: Animal AL032 shank 1 dataset 1 to 5  
@@ -45,5 +47,8 @@ Plot waveforms, firing rate, and xz locations of a chain of choice
   
   
   
-4. Figure - code for reproducing figures 
+### 3. Figure - code for reproducing figures 
+
+
+
 
