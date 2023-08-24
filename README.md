@@ -8,6 +8,7 @@ Directories:
 - Figure: code for reproducing figures in the manuscript
 
 1. Pipeline  
+
 Function 1 - NT_main.m  
 Goal: Match units between 2 datasets.    
 Input: Kilosort cluster label(only include clusters in the region of interest), channel map, mean waveforms(preprocessed with ecephys_spike_sorting repo)  
