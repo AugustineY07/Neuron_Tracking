@@ -21,9 +21,6 @@ input.KSLabel_name = 'cluster_KSLabel.tsv';
 
 numData = 5; 
 
-% Reference data
-input.validation = 0; %whether there is validation dataset, if yes, change to 1
-input.validation_path = ''; %validation file path, should be a table containing 'correct answers'
 
 
 %----------Unit tracking----------
@@ -68,15 +65,4 @@ plot_fr(fr_all, fr_change, numData, ichain);
 % plot location
 plot_loc(all_input,x_loc_all,z_loc_all, chan_pos, numData,ichain)
 
-
-
-%----------Generate distance matrix to check datasets----------
-%dist_mat();
-
-
-
-%----------Calculate recovery rate and accuracy of each dataset pair----------
-if input.validation == 1
-    %acc();
-end
 
