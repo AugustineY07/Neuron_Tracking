@@ -4,7 +4,7 @@ All features are implemented in MATLAB R2021b.
 
 ## Required packages:  
 * npy-matlab(https://github.com/kwikteam/npy-matlab): need for reading .npy files
-* JRClust(https://github.com/jenniferColonell/JRCLUST): need for sorted dataset post-processing  
+* ecephys(https://github.com/jenniferColonell/ecephys_spike_sorting): need for sorted dataset post-processing  
 
 ## Directories:
 - Pipeline: code for tracking neurons
