@@ -29,7 +29,11 @@ Output: Summary of chains within distance threshold
 Goal: Summarize L2, FR, and locations of all fully tracked chains.   
 Input: Summary of chains 
 Output: Plots(waveforms, firing rate, xz locations) of selected chains  
-  
+
+* Additional Features:
+  dist_mat.m: A function used to generate a 'distance matrix' that gives an idea of whether to exclude certain datasets with poor trackability. It is more meaningful to run on datasets with many comparisons. 
+  acc.m: A function used to compute recovery rate(without threshold) and accuracy(with threshold). Only use if there are validation information. Will use a matrix with correct-match cluster labels as input.  
+
 * Documentation:  
 output.all_results (column code) = [reference(0 for datasets without validation info), d2 clu label, d1 clu label, EMD distance, location distance, waveform distance, vertical distance]
 output.results_wth = unit assignment with threshold applied  
