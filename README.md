@@ -2,7 +2,7 @@
 This repositor contains the code used for the manuscript: "Multi-day Neuron Tracking in High Density Electrophysiology Recordings using EMD".
 All features are implemented in MATLAB R2021b.
 
-Required packages  
+Required packages:  
 1. npy-matlab(https://github.com/kwikteam/npy-matlab): need for accessing .npy files  
 2. JRClust(https://github.com/jenniferColonell/JRCLUST): need for sorted dataset post-processing  
 
