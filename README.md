@@ -11,7 +11,17 @@ Directories:
 Function 1 - NT_main.m  
 Goal: Match units between 2 datasets.    
 Input: Kilosort cluster label(only include clusters in the region of interest), channel map, mean waveforms(preprocessed with ecephys_spike_sorting repo)  
-Output: Unit match assignment
+Output: Unit match assignment  
+
+Function 2 - chain_summary.mat  
+Goal: Find chains using output from all datasets.    
+Input: Unit assignment from multiple datasets   
+Output: Summary of chains within distance threshold  
+
+Function 3 - chain_stats.mat  
+Goal: Summarize L2, FR, and locations of all fully tracked chains.   
+Input: Summary of chains 
+Output: Plots(waveforms, firing rate, xz locations) of selected chains  
   
 Documentation:  
 output.all_results (column code) = [reference(0 for datasets without validation info), d2 clu label, d1 clu label, EMD distance, location distance, waveform distance, vertical distance]
