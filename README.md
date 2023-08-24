@@ -23,9 +23,10 @@ output.results_wth = unit assignment with threshold applied
 Function - Example_run.m  
 Goal: Demonstrate an example with 5 datasets
 Input: Animal AL032 shank 1 dataset 1 to 5  
-Output: result_chain.mat - A matlab file contains the summary of chains within distance threshold, 
+Output: result_chain.mat - A matlab file contains the summary of chains within distance threshold  
+        chain_stats.mat - A matlab file contains the summary of L2 weight, firing rate, and xz locations of fully tracked chains  
   
   
   
-3. Figure - code for reproducing figures 
+4. Figure - code for reproducing figures 
 
