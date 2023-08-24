@@ -68,4 +68,5 @@ for ichain = 1:size(full_chain,1)
     end
 end
 
+save('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\chain_stats.mat','full_chain','L2_weight','fr_all','fr_change','z_loc','x_loc')
 end
