@@ -1,12 +1,12 @@
 % An example of tracking units in animal AL032 shank 1 
 
 %----------add packages----------
-addpath(genpath('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version'))
+addpath(genpath('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version')) %NEED CHANGE 
 addpath(genpath('D:\Data\Pipeline\npy\npy-matlab'))
 
 %----------define parameter and path----------
-input.input_path = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\'; %main directory 
-input.EMD_path = fullfile(input.input_path,'EMD_input\'); %EMD input directory 
+input.input_path = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\'; %main directory, NEED CHANGE 
+input.EMD_path = fullfile(input.input_path,'EMD_input\'); %EMD input directory, NEED CHANGE 
 % Input data
 input.fs = 30000; %acquisition rate
 input.ts = 82; %wf time samples
@@ -26,8 +26,8 @@ numData = 5;
 %----------Unit tracking----------
 % Find match of all datasets (default: day n and day n+1, can be changed to track between non-consecutive datasets)
 for id = 1:numData-1
-    input.data_path1 = ['D',num2str(id)]; % frist dataset
-    input.data_path2 = ['D',num2str(id+1)]; % second dataset
+    input.data_path1 = ['D',num2str(id)]; % frist dataset, NEED CHANGE 
+    input.data_path2 = ['D',num2str(id+1)]; % second dataset, NEED CHANGE 
     input.result_path = fullfile(input.input_path,['result',num2str(id),num2str(id+1)]); %result directory 
     input.input_name = ['input',num2str(id),'.mat']; 
     input.input_name_post = ['input_post',num2str(id),'.mat']; 
@@ -53,7 +53,7 @@ full_chain = chain_all(len == numData,:); %find chains with length across all da
 [L2_weight,fr_all,fr_change,x_loc_all,z_loc_all] = chain_stats(all_input,all_output,full_chain,numData);
 
 numChain = size(full_chain,1);
-ichain = 1; %which chain to plot, please enter a number between 1 and numChain as input 
+ichain = 1; %which chain to plot, please enter a number between 1 and numChain as input, NEED CHANGE  
 
 figure()
 for id = 1:numData-1
