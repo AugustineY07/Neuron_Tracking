@@ -22,15 +22,15 @@ input.KSLabel_name = 'cluster_KSLabel.tsv';
 numData = 5; 
 
 % Reference data
-input.validation = 0; %whether there is validation dataset
-input.validation_path = '';
+input.validation = 0; %whether there is validation dataset, if yes, change to 1
+input.validation_path = ''; %validation file path, should be a table containing 'correct answers'
 
 
 %----------Unit tracking----------
-% Find match of all datasets (default: day n and day n+1)
+% Find match of all datasets (default: day n and day n+1, can be changed to track between non-consecutive datasets)
 for id = 1:numData-1
-    input.data_path1 = ['D',num2str(id)];  
-    input.data_path2 = ['D',num2str(id+1)]; 
+    input.data_path1 = ['D',num2str(id)]; % frist dataset
+    input.data_path2 = ['D',num2str(id+1)]; % second dataset
     input.result_path = fullfile(input.input_path,['result',num2str(id),num2str(id+1)]); %result directory 
     input.input_name = ['input',num2str(id),'.mat']; 
     input.input_name_post = ['input_post',num2str(id),'.mat']; 
@@ -52,9 +52,11 @@ end
 
 
 %----------Plot chains of interest (waveform, firing rate, original location, drift-corrected location, L2)----------
-ichain = 1; %which chain to plot, NEED CHANGE
 full_chain = chain_all(len == numData,:); %find chains with length across all datasets
 [L2_weight,fr_all,fr_change,x_loc_all,z_loc_all] = chain_stats(all_input,all_output,full_chain,numData);
+
+numChain = size(full_chain,1);
+ichain = 1; %which chain to plot, please enter a number between 1 and numChain as input 
 
 figure()
 for id = 1:numData-1
@@ -69,13 +71,12 @@ plot_loc(all_input,x_loc_all,z_loc_all, chan_pos, numData,ichain)
 
 
 %----------Generate distance matrix to check datasets----------
-dist_mat();
+%dist_mat();
 
 
 
 %----------Calculate recovery rate and accuracy of each dataset pair----------
-acc();
+if input.validation == 1
+    %acc();
+end
 
-
-%----------Save files----------
-%save('full_chain','L2_weight_full','fr_change_full','z_loc_full')
