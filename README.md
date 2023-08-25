@@ -1,5 +1,6 @@
-# Neuron_Tracking [Still working, please check back in a week]
+# Neuron_Tracking
 This repository contains the code used for the manuscript: "Multi-day Neuron Tracking in High Density Electrophysiology Recordings using EMD". (doi: https://doi.org/10.1101/2023.08.03.551724)
+
 All features are implemented in MATLAB R2021b.
 
 ## Required packages:  
@@ -32,9 +33,10 @@ Input: Summary of chains
 Output: Plots(waveforms, firing rate, xz locations) of selected chains  
 
 * Additional Functions:
-  * dist_mat.m: A function used to generate a 'distance matrix' that gives an idea of whether to exclude certain datasets with poor trackability. It is more meaningful to run on datasets with many comparisons. 
-  * acc.m: A function used to compute recovery rate(without threshold) and accuracy(with threshold). Only use if there are validation information. Will use a matrix with correct-match cluster labels as input.  
   * ks2_working_toBinary: Converts the KS2.5 temp_wh.dat file, which has been drift corrected, to a standard, correctly scaled binary to be input to C_Waves
+  * dist_mat.m: A function used to generate a 'distance matrix' that gives an idea of whether to exclude certain datasets with poor trackability. It is more meaningful to run on datasets with many comparisons. 
+  * acc.m: A function used to compute recovery rate(without threshold) and accuracy(with threshold). Only use if there are validation information. Will use a matrix with correct-match cluster labels as input. The directory 'supplementary' contains one example validation table 'truth.mat'(from animal AL032 shank 1 dataset 1 and 2).   
+
 
 * Documentation:  
 output.all_results (column code) = [reference(0 for datasets without validation info), d2 clu label, d1 clu label, EMD distance, location distance, waveform distance, vertical distance]

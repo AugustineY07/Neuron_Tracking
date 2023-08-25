@@ -9,6 +9,7 @@ wf_metrics1 = wave_metrics(mwf1, chan_pos, input); %col 9,10,11 = x,z,y
 wf_metrics2 = wave_metrics(mwf2, chan_pos, input);
 
 % Estimate drift
+output.threshold = input.threshold;
 output.z_mode = 0;
 output = create_EMD_input(input, output, wf_metrics1, wf_metrics2, mwf1, mwf2, 'pre'); 
 output = EMD_unit_match(input,output,'pre');
