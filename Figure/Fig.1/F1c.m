@@ -7,7 +7,7 @@ day2 = 3;
 clu_label1 = 50;
 clu_label2 = 60;
 
-fig_path = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\Github Figure reproduce\F1';
+fig_path = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\Github Figure reproduce\F1'; %NEED CHANGE to local path
 wave1 = readNPY(fullfile(fig_path,'ksproc_mean_waveforms1.npy'));
 wave2 = readNPY(fullfile(fig_path,'ksproc_mean_waveforms2.npy'));
 chann_map = readNPY(fullfile(fig_path,'channel_map.npy'))'+1;
