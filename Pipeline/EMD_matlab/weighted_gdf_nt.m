@@ -30,8 +30,6 @@ function [E,L2] = weighted_gdf_nt(V1, V2, mw1, mw2, chan_pos, dim_mask, l2_weigh
 
 % further modified to allow calling l2 distance between 2D waveforms from
 % this function. 
-% TODO -- change weights from hard coded here to passing in as another
-% variable; can then dispense with the mask, just send in 0 weights.
 
 dim_weights(1) = 0.1; % centroid x, 1/um^2
 dim_weights(2) = 0.1; % centroid z, 1/um^2

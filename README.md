@@ -1,10 +1,11 @@
 # Neuron_Tracking [Still working, please check back in a week]
-This repositor contains the code used for the manuscript: "Multi-day Neuron Tracking in High Density Electrophysiology Recordings using EMD".
+This repository contains the code used for the manuscript: "Multi-day Neuron Tracking in High Density Electrophysiology Recordings using EMD". (doi: https://doi.org/10.1101/2023.08.03.551724)
 All features are implemented in MATLAB R2021b.
 
 ## Required packages:  
 * npy-matlab(https://github.com/kwikteam/npy-matlab): need for reading .npy files
-* ecephys(https://github.com/jenniferColonell/ecephys_spike_sorting): need for sorted dataset post-processing  
+* C_Waves (https://billkarsh.github.io/SpikeGLX/#post-processing-tools): to generate mean waveforms
+* ecephys(https://github.com/jenniferColonell/ecephys_spike_sorting): for KS2.5 post-processing and metrics 
 
 ## Directories:
 - Pipeline: code for tracking neurons
@@ -17,7 +18,7 @@ All features are implemented in MATLAB R2021b.
 
 * Function 1 - NT_main.m  
 Goal: Match units between 2 datasets.    
-Input: Kilosort cluster label(only include clusters in the region of interest), channel map, mean waveforms(preprocessed with ecephys_spike_sorting repo)  
+Input: Kilosort cluster label(only include clusters in the region of interest), channel map, mean waveforms (created with C_Waves or other tool, from the KS2.5 drift corrected data)  
 Output: Unit match assignment  
 
 * Function 2 - chain_summary.mat  
@@ -30,9 +31,10 @@ Goal: Summarize L2, FR, and locations of all fully tracked chains.
 Input: Summary of chains 
 Output: Plots(waveforms, firing rate, xz locations) of selected chains  
 
-* Additional Features:
+* Additional Functions:
   * dist_mat.m: A function used to generate a 'distance matrix' that gives an idea of whether to exclude certain datasets with poor trackability. It is more meaningful to run on datasets with many comparisons. 
   * acc.m: A function used to compute recovery rate(without threshold) and accuracy(with threshold). Only use if there are validation information. Will use a matrix with correct-match cluster labels as input.  
+  * ks2_working_toBinary: Converts the KS2.5 temp_wh.dat file, which has been drift corrected, to a standard, correctly scaled binary to be input to C_Waves
 
 * Documentation:  
 output.all_results (column code) = [reference(0 for datasets without validation info), d2 clu label, d1 clu label, EMD distance, location distance, waveform distance, vertical distance]

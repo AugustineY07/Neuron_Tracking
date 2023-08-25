@@ -1,12 +1,16 @@
 % An example of tracking units in animal AL032 shank 1 
 
+clear;
+
 %----------add packages----------
-addpath(genpath('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version')) %NEED CHANGE 
-addpath(genpath('D:\Data\Pipeline\npy\npy-matlab'))
+% EDIT THESE PATHS FOR YOUR SYSTEM
+addpath(genpath('C:\Users\colonellj\Documents\matlab_ephys\AY_match_current\Neuron_Tracking')) %Add this repo to MATLAB path 
+addpath(genpath('C:\Users\colonellj\Documents\npy-matlab-master')) %Add npy-matlab to MATLAB path
 
 %----------define parameter and path----------
-input.input_path = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\'; %main directory, NEED CHANGE 
-input.EMD_path = fullfile(input.input_path,'EMD_input\'); %EMD input directory, NEED CHANGE 
+%parent directory of the data (see Example directory in this repo for organizaiont) -- EDIT FOR YOUR SYSTEM 
+input.input_path = 'C:\Users\colonellj\Documents\matlab_ephys\AY_match_current\Neuron_Tracking\Example'; 
+input.EMD_path = input.input_path;
 % Input data
 input.fs = 30000; %acquisition rate
 input.ts = 82; %wf time samples
@@ -18,16 +22,17 @@ input.dim_mask_wf = logical([0,0,0,0,0,0,0,0,0,1]);
 input.chan_pos_name = 'channel_positions.npy';
 input.wf_name = 'ksproc_mean_waveforms.npy';
 input.KSLabel_name = 'cluster_KSLabel.tsv';
+input.validation = 0;
 
-numData = 5; 
+numData = 2; 
 
 
 
 %----------Unit tracking----------
 % Find match of all datasets (default: day n and day n+1, can be changed to track between non-consecutive datasets)
 for id = 1:numData-1
-    input.data_path1 = ['D',num2str(id)]; % frist dataset, NEED CHANGE 
-    input.data_path2 = ['D',num2str(id+1)]; % second dataset, NEED CHANGE 
+    input.data_path1 = ['D',num2str(id)]; % first dataset, CHANGE to track non-consecutively 
+    input.data_path2 = ['D',num2str(id+1)]; % second dataset, CHANGE to track non-consecutively
     input.result_path = fullfile(input.input_path,['result',num2str(id),num2str(id+1)]); %result directory 
     input.input_name = ['input',num2str(id),'.mat']; 
     input.input_name_post = ['input_post',num2str(id),'.mat']; 
