@@ -11,8 +11,8 @@ fig_path = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\Gith
 wave1 = readNPY(fullfile(fig_path,'ksproc_mean_waveforms1.npy'));
 wave2 = readNPY(fullfile(fig_path,'ksproc_mean_waveforms2.npy'));
 chann_map = readNPY(fullfile(fig_path,'channel_map.npy'))'+1;
-chann_pos = load(fullfile(fig_path,'d1d3_sh2_locwf_emd_input_corrected.mat')).chan_pos;
-clu = load(fullfile(fig_path,'AL032_PSTH.mat')).good_clu;
+chann_pos = load(fullfile(fig_path,'chan_pos.mat')).chann_pos;
+clu = load(fullfile(fig_path,'clu.mat')).clu;
 ishank = 1; 
 clu_idx1 = find(clu(day1,ishank).clu == clu_label1); %cluster index 
 clu_idx2 = find(clu(day2,ishank).clu == clu_label2);
