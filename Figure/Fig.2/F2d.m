@@ -2,8 +2,8 @@
 clear all
 
 fig_path = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\Github Figure reproduce\F2'; %NEED CHANGE to local path
-KS_shankSum = load(fullfile(fig_path,'F2d_count.mat')).KS_shankSum;
-nRef_shankSum = load(fullfile(fig_path,'F2d_count.mat')).nRef_shankSum;
+load(fullfile(fig_path,'F2d_count.mat'));
+
 day = 5;
 shank = 4;
 dur = [1 2 13 23 48];
