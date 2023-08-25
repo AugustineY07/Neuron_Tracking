@@ -49,7 +49,10 @@ for id = 1:numData-1 % Load data
     all_input(id) = load(fullfile(input.input_path,['result',num2str(id),num2str(id+1)], "Input.mat")); 
     all_output(id) = load(fullfile(input.input_path,['result',num2str(id),num2str(id+1)],'Output.mat'));
 end
+
+save(fullfile(input.input_path,'all.mat'),"all_input","all_output")
 [chain_all,z_loc,len] = chain_summary(all_input,all_output,numData,input.input_path);
+
 
 
 
