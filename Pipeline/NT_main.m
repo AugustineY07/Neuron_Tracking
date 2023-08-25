@@ -1,7 +1,8 @@
 % This is the main function of the algorithm
 % Input: kilosort cluster label, channel map, mean waveforms, 
 % Output: Unit match assignment
-% For more comparisons, users need to write their own loops
+% For more comparisons, users need to write their own loops; see
+% Example_run.m
 function NT_main(input,chan_pos,mwf1,mwf2)
 
 % Estimate location 

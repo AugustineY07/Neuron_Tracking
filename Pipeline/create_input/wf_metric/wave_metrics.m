@@ -1,4 +1,8 @@
 function meas_out = wave_metrics(mw, chan_pos, input)
+% Calculate an array of simple waveform metrics from the mean waveforms for
+% each unit.
+% 1D waveform characteristics based on allen ecephys pipeline
+% Position fitting based on Boussard 2D fit to 1/R
 
 [nUnit, nChan, nt] = size(mw);
 pp_all = squeeze(max(mw,[],3)-min(mw,[],3));
@@ -106,20 +110,21 @@ for i = 1:nUnit
     % 2D waveform metrics    
     pp_unit = squeeze(pp_all(i,:))';
 
-% Julien Boussard - style fit of peak-to-peak voltage vs position
-% if background sub pp_unit > 60 uV, attempt a fit of the
-% background subtracted pp_all
-if max(squeeze(pp_all(i,:))) > 60
-    fitvals = fit_loc(i, pp_all, chan_pos);
-    fitX = fitvals(1);
-    fitZ = fitvals(2);
-    fitY = fitvals(3);
-else
-    fitX = chan_pos(pk_chan(i),1);
-    fitZ = chan_pos(pk_chan(i),2);
-    fitY = -1;      % a marker for no fit
-end
+    % Julien Boussard - style fit of peak-to-peak voltage vs position
+    % if background sub pp_unit > 60 uV, attempt a fit of the
+    % background subtracted pp_all
+    if max(squeeze(pp_all(i,:))) > 60
+        fitvals = fit_loc(i, pp_all, chan_pos);
+        fitX = fitvals(1);
+        fitZ = fitvals(2);
+        fitY = fitvals(3);
+    else
+        fitX = chan_pos(pk_chan(i),1);
+        fitZ = chan_pos(pk_chan(i),2);
+        fitY = -1;      % a marker for no fit
+    end
 
+    % calculate spread of waveforms in z
     sp_thresh = 0.2*max(pp_unit);
     chan_above = pp_unit > sp_thresh;
     zmax = max(chan_pos(chan_above,2));

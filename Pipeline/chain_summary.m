@@ -1,7 +1,7 @@
 % This is the second function of the algorithm
 % Input: Unit assignment from multiple datasets 
 % Output: Summary of chains within distance threshold
-function [chain_all,z_loc,len] = chain_summary(all_input,all_output,numData)
+function [chain_all,z_loc,len] = chain_summary(all_input,all_output,numData,output_path)
 
 % Summarize chains
 numChain = 200; %set to a number large number
@@ -51,5 +51,5 @@ for ir = 1:length(all_output)-1
     len = sum(chain_all ~= 0,2); %chain lengths
 end
 
-save('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\chain_summary.mat', "chain_all", "z_loc", "len");
+save(fullfile(output_path,'chain_summary.mat'), "chain_all", "z_loc", "len");
 end

@@ -1,5 +1,5 @@
 % calculate L2, FR, and locations of all chains
-function [L2_weight,fr_all,fr_change,x_loc,z_loc] = chain_stats(all_input,all_output,full_chain,numData)
+function [L2_weight,fr_all,fr_change,x_loc,z_loc] = chain_stats(all_input,all_output,full_chain,numData,output_path)
 
 for ichain = 1:size(full_chain,1)
     for id = 1:numData-1
@@ -68,5 +68,5 @@ for ichain = 1:size(full_chain,1)
     end
 end
 
-save('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\chain_stats.mat','full_chain','L2_weight','fr_all','fr_change','z_loc','x_loc')
+save(fullfile(output_path,'chain_stats.mat'),'full_chain','L2_weight','fr_all','fr_change','z_loc','x_loc')
 end
