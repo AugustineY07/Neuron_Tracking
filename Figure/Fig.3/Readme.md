@@ -1,1 +1,1 @@
-Figures 3 and 4
+Figures 3 
