@@ -39,7 +39,7 @@ for id = 1:numData-1
     mwf2 = readNPY(fullfile(input.input_path, input.data_path2, 'ksproc_mean_waveforms.npy'));
     NT_main(input,chan_pos,mwf1,mwf2);
 end
-fprintf('Find matches \n')
+fprintf('Matches found. \n')
 
 % Find chains
 for id = 1:numData-1 % Load data
@@ -48,7 +48,7 @@ for id = 1:numData-1 % Load data
 end
 save(fullfile(input.input_path,'all.mat'),"all_input","all_output")
 [chain_all,z_loc,len] = chain_summary(all_input,all_output,numData);
-fprintf('Find chains \n')
+fprintf('Chains found. \n')
 
 
 %----------Plot chains of interest (waveform, firing rate, original location, drift-corrected location, L2)----------
