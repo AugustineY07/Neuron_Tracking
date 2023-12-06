@@ -1,4 +1,4 @@
-function [f, L2] = gdm_nt(F1, F2,  mw1, mw2, chan_pos, dim_mask, l2_weight, Func)
+function [f, L2] = gdm_nt(F1, F2,  mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, Func)
 % NT version modified from original to pass along mean waveform
 % and channel position information to the ground distance function
 % While technically just part of the signature, the need for the chan_pos
@@ -40,7 +40,10 @@ function [f, L2] = gdm_nt(F1, F2,  mw1, mw2, chan_pos, dim_mask, l2_weight, Func
 for i = 1:m
     for j = 1:n
 %         f(i, j) = weighted_gdf_nt(F1(i, 1:a), F2(j, 1:a), squeeze(mw1(i,:,:)), squeeze(mw2(j,:,:)), chan_pos, dim_mask, l2_weight);
-        [f(i, j) L2(i,j)] = Func(F1(i, 1:a), F2(j, 1:a), squeeze(mw1(i,:,:)), squeeze(mw2(j,:,:)), chan_pos, dim_mask, l2_weight);
+%         [f(i, j) L2(i,j)] = Func(F1(i, 1:a), F2(j, 1:a), squeeze(mw1(i,:,:)), squeeze(mw2(j,:,:)), chan_pos, dim_mask, l2_weight);
+%         fprintf('F1(%d) = %d, F2(%d) = %d\n', i, F1, j, F2);
+        [f(i, j) L2(i,j)] = weighted_gdf_nt(F1(i, 1:a), F2(j, 1:a), squeeze(mw1(i,:,:)), squeeze(mw2(j,:,:)), chan_pos, dim_mask, l2_weight, xStep, zStep);
+
     end
 end
 

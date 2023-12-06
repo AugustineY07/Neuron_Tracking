@@ -1,4 +1,4 @@
-function [E,L2] = weighted_gdf_nt(V1, V2, mw1, mw2, chan_pos, dim_mask, l2_weight)
+function [E,L2] = weighted_gdf_nt(V1, V2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep)
 %
 % GDF   Ground distance between two vectors
 %    [E] = GDF(F1, F2) is the ground distance between two feature vectors.
@@ -30,6 +30,8 @@ function [E,L2] = weighted_gdf_nt(V1, V2, mw1, mw2, chan_pos, dim_mask, l2_weigh
 
 % further modified to allow calling l2 distance between 2D waveforms from
 % this function. 
+% TODO -- change weights from hard coded here to passing in as another
+% variable; can then dispense with the mask, just send in 0 weights.
 
 dim_weights(1) = 0.1; % centroid x, 1/um^2
 dim_weights(2) = 0.1; % centroid z, 1/um^2
@@ -49,17 +51,26 @@ dim_weights(10) = l2_weight; % 'L2 norm' (estimated, need to run some bootstrapp
 
 V1 = V1(dim_mask(1:9));
 V2 = V2(dim_mask(1:9));
+%fprintf('V1 = %d\n', V1);
+%fprintf('V2 = %d\n', V2);
 
 w = dim_weights(dim_mask(1:9));
 diffsq = (V2 - V1).^2;
+fprintf('diffsq = %d\n', diffsq);
 if dim_mask(10) ~= 0
     % calculate l2 distance between these waveforms
-    [~,wave_l2] = calcCenteredCorrL2(mw1,mw2, chan_pos, 5);
+    [~,wave_l2] = calcCenteredCorrL2(mw1,mw2, chan_pos, zStep, 5); %nRow = 
     diffsq = [diffsq,wave_l2^2];
     w = [w,dim_weights(10)]; %weights for all parameters
 end
+%fprintf('wave_l2 = %d\n', wave_l2);
+%fprintf('w = %d\n', w);
+%fprintf('diffsq = %d\n', diffsq);
+
 
 E = sqrt(dot(diffsq,w));
-[~,L2] = calcCenteredCorrL2(mw1,mw2, chan_pos, 5);
+fprintf('dot = %d\n', dot(diffsq,w));
+fprintf('E = %d\n', E);
+[~,L2] = calcCenteredCorrL2(mw1,mw2,chan_pos, zStep, 5);
 
 end

@@ -1,12 +1,17 @@
 % Match units using EMD
 function output = EMD_unit_match(input,output,stage)
 
+%stage = 'post'
+
+
 dim_mask = input.dim_mask;
 dim_mask_physical = input.dim_mask_physical;
 dim_mask_wf = input.dim_mask_wf;
 l2_weight = input.l2_weights;
 rootD = input.EMD_path;
 v = input.validation;
+xStep = input.xStep;
+zStep = input.zStep;
 
 % output path
 switch stage
@@ -33,6 +38,20 @@ f2_labels = points.f2_labels;
 w1 = ones(size(f1,1),1);%ones([length(f1),1])/length(f1);
 w2 = ones(size(f2,1),1);%ones([length(f2),1])/length(f2);
 
+
+% % test batch with #3 neurons 
+% idx_f1 = [find(f1_labels==4),find(f1_labels==25),find(f1_labels==87)];
+% idx_f2 = [find(f2_labels==4),find(f2_labels==120),find(f2_labels==151)];
+% f1 = f1(idx_f1,:);
+% f2 = f2(idx_f2,:);
+% mw1 = mw1(idx_f1,:,:);
+% mw2 = mw2(idx_f2,:,:);
+% f1_labels = f1_labels(idx_f1,:);
+% f2_labels = f2_labels(idx_f2,:);
+% w1 = ones(size(f1,1),1);
+% w2 = ones(size(f2,1),1);
+
+
 % initialize distance mat
 C = [];
 Cp = [];
@@ -40,23 +59,25 @@ Cw = [];
 
 switch stage
     case 'pre'
-        [x, fval, L2] = emd_nt(f1, f2, w1, w2, mw1, mw2, chan_pos, dim_mask, l2_weight, @weighted_gdf_nt);
-        P = reshape(x,[length(f2),length(f1)]);
-        C = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask, l2_weight, @weighted_gdf_nt); % Distance matrix
-        Cp = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_physical, l2_weight, @weighted_gdf_nt);
-        Cw = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_wf, l2_weight, @weighted_gdf_nt);
+        [x, fval, L2] = emd_nt(f1, f2, w1, w2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        P = reshape(x,[size(f2,1),size(f1,1)]);
+        [C,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt); % Distance matrix
+        [Cp,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_physical, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        [Cw,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_wf, l2_weight, xStep, zStep, @weighted_gdf_nt);
     case 'post'
-        [x, fval, L2] = emd_nt(f1, f2, w1, w2, mw1, mw2, chan_pos, dim_mask,l2_weight, @weighted_gdf_nt);
-        P = reshape(x,[length(f2),length(f1)]);
-        C = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask, l2_weight, @weighted_gdf_nt);
-        Cp = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_physical, l2_weight, @weighted_gdf_nt);
-        Cw = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_wf, l2_weight, @weighted_gdf_nt);
+        [x, fval, L2] = emd_nt(f1, f2, w1, w2, mw1, mw2, chan_pos, dim_mask,l2_weight, xStep, zStep, @weighted_gdf_nt);
+        P = reshape(x,[size(f2,1),size(f1,1)]);
+        [C,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        [Cp,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_physical, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        [Cw,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_wf, l2_weight, xStep, zStep, @weighted_gdf_nt);
 end
 cost = sum(C.*x);
-C_dist = reshape(C,[length(f1),length(f2)]);
-C_physical = reshape(Cp,[length(f1),length(f2)]);
-C_wf = reshape(Cw,[length(f1),length(f2)]);
-
+% C_dist = reshape(C,[size(f1,1),size(f2,1)]);
+% C_physical = reshape(Cp,[size(f1,1),size(f2,1)]);
+% C_wf = reshape(Cw,[size(f1,1),size(f2,1)]);
+C_dist = reshape(C,[size(f2,1),size(f1,1)]);
+C_physical = reshape(Cp,[size(f2,1),size(f1,1)]);
+C_wf = reshape(Cw,[size(f2,1),size(f1,1)]);
 
 
 
@@ -118,9 +139,12 @@ for nm = 1:np
                     % f2 has no pair, f1 = FP
                     pair_results(nf,4) = f2_labels(maxColInd);
                     pair_results(nf,5) = -1;
-                    pair_results(nf,6) = C_dist(nm,maxColInd);
-                    pair_results(nf,7) = C_physical(nm,maxColInd);
-                    pair_results(nf,8) = C_wf(nm,maxColInd); %nm,maxColInd
+%                     pair_results(nf,6) = C_dist(nm,maxColInd);
+%                     pair_results(nf,7) = C_physical(nm,maxColInd);
+%                     pair_results(nf,8) = C_wf(nm,maxColInd); %nm,maxColInd
+                    pair_results(nf,6) = C_dist(maxColInd,nm);
+                    pair_results(nf,7) = C_physical(maxColInd,nm);
+                    pair_results(nf,8) = C_wf(maxColInd,nm); %nm,maxColInd
                     pair_results(nf,9) = abs(f1(nm,2) - f2(maxColInd,2));
 
                 end
@@ -161,9 +185,15 @@ for nm = 1:np
                 all_results(ip,1) = 1; %has ref or not
             end
         end
-        all_results(ip,4) = C_dist(nm,maxColInd); %loc+wf EMD distance
-        all_results(ip,5) = C_physical(nm,maxColInd); %loc EMD distance
-        all_results(ip,6) = C_wf(nm,maxColInd); %wf EMD distance
+%         all_results(ip,4) = C_dist(nm,maxColInd); %loc+wf EMD distance
+%         all_results(ip,5) = C_physical(nm,maxColInd); %loc EMD distance
+%         all_results(ip,6) = C_wf(nm,maxColInd); %wf EMD distance
+%         fprintf('nm = %d, maxColInd = %d \n', nm,maxColInd)
+        all_results(ip,4) = C_dist(maxColInd,nm); %loc+wf EMD distance
+        all_results(ip,5) = C_physical(maxColInd,nm); %loc EMD distance
+        all_results(ip,6) = C_wf(maxColInd,nm); %wf EMD distance
+        fprintf('nm = %d, maxColInd = %d \n', nm,maxColInd)
+        test_idx(nm) = maxColInd; %test if C is recorded correctly
         all_results(ip,7) = abs(f1(nm,2) - f2(maxColInd,2)); %z distance
     end
 end
@@ -199,7 +229,6 @@ for nm = 1:length(f1)
         f2_emd_ind(nm) = maxColInd;
     end
 end
-
 
 
 % save results 

@@ -1,12 +1,8 @@
-function [x, fval, L2] = emd_nt(F1, F2, W1, W2, mw1, mw2, chan_pos, dim_mask, l2_weight, Func)
+function [x, fval, L2] = emd_nt(F1, F2, W1, W2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, Func)
 % NT = "Neuron tracking" specialized version of EMD (info below)
 % Addition parameters are:
 % mw1, mw2: (nUnit x nSite) arrays, mean waveforms for the units included in F1 and F2
 % chan_pos: (nSite x 2) array of x and z coordinates of sites on the probe.
-% dim_mask: (10 x 1) array for selecting which quantities in weighted_gdf_nt.m are
-% included in distance metric
-% l2_weight: weight for the waveform similarity portion of the EMD distance
-% other weights are hard coded in weighted_gdf_nt.m
 % Note that F1 and F2 must be recorded on identical sites of the probe.
 % 
 % EMD   Earth Mover's Distance between two signatures
@@ -45,8 +41,15 @@ function [x, fval, L2] = emd_nt(F1, F2, W1, W2, mw1, mw2, chan_pos, dim_mask, l2
 %    http://www.cv.tu-berlin.de/~ulas/RaRF
 %
 
+%
+% F1 = f1;
+% F2 = f2;
+% W1 = w1;
+% W2 = w2;
+
 % ground distance matrix
-[f,L2] = gdm_nt(F1, F2, mw1, mw2, chan_pos, dim_mask, l2_weight, Func);
+[f,L2] = gdm_nt(F1, F2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, Func);
+fprintf('f = %d, L2 = %d\n', f, L2);
 
 % number of feature vectors
 [m a] = size(F1);
@@ -76,4 +79,5 @@ lb = zeros(1, m * n);
 [x, fval] = linprog(f, A, b, Aeq, beq, lb);
 fval = fval / sum(x);
 
+fprintf('x = %d, fval = %d\n', x, fval);
 end
