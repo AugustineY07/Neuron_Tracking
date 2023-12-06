@@ -1,7 +1,7 @@
 # Neuron_Tracking
 This repository contains the code used for the manuscript: "Multi-day Neuron Tracking in High Density Electrophysiology Recordings using EMD". (doi: https://doi.org/10.1101/2023.08.03.551724)
 
-All features are implemented in MATLAB R2021b.
+All features are implemented in MATLAB R2023b.
 
 ## Required packages:  
 * npy-matlab(https://github.com/kwikteam/npy-matlab): need for reading .npy files
