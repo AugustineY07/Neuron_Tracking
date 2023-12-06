@@ -35,7 +35,8 @@ switch stage
     case 'pre'
         wm2 = wf_metrics2;
     case 'post'
-        wm2 = wf_metrics2 - all_z_mode;
+        wf_metrics2(:,10) = wf_metrics2(:,10) - all_z_mode; %z - mode
+        wm2 = wf_metrics2;
 end
 
 
@@ -117,16 +118,15 @@ end
 
 
 
-% will be stored 
+% will be stored
 if ~exist(EMD_input_dir, 'dir')
     mkdir(EMD_input_dir);
 end
 if v == 1
     save(out_fullpath, 'f1', 'f2', 'f2_same_ind', 'mw1', 'mw2','chan_pos','f1_labels','f2_labels');
 else
-    save(out_fullpath, 'f1', 'f2', 'mw1', 'mw2','chan_pos','f1_labels','f2_labels');
+    save(out_fullpath, 'f1', 'f2','mw1', 'mw2','chan_pos','f1_labels','f2_labels');
 end
+
+
 end
-
-
-
