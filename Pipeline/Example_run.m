@@ -13,6 +13,8 @@ input.ts = 82; %wf time samples
 input.l2_weights = 1500;
 input.threshold = 10;
 input.validation = 0; %no reference data
+input.xStep = 32;
+input.zStep = 20;
 input.dim_mask = logical([1,1,1,0,0,0,0,0,0,1]);
 input.dim_mask_physical = logical([1,1,1,0,0,0,0,0,0,0]);
 input.dim_mask_wf = logical([0,0,0,0,0,0,0,0,0,1]);
@@ -25,6 +27,10 @@ numData = 5;
 
 
 %----------Unit tracking----------
+if exist(input.EMD_path, 'dir') == 0
+    mkdir(input.EMD_path);
+end
+
 % Find match of all datasets (default: day n and day n+1, can be changed to track between non-consecutive datasets)
 for id = 1:numData-1
     input.data_path1 = ['D',num2str(id)]; % frist dataset, NEED CHANGE 
@@ -39,16 +45,33 @@ for id = 1:numData-1
     mwf2 = readNPY(fullfile(input.input_path, input.data_path2, 'ksproc_mean_waveforms.npy'));
     NT_main(input,chan_pos,mwf1,mwf2);
 end
-fprintf('Matches found. \n')
 
-% Find chains
+
+
+%% ----------Plot matched units----------
+% unit locations of two datasets, INPUT = result path, EMD file
+plot_unit(chan_pos,input,'result12','EMD_post1.mat');
+
+% waveform, INPUT = cluster number in dataset 1 and 2
+plot_waveform(input,chan_pos,6,6);
+
+% Z distance distribution
+plot_z(input.result_path);
+
+% waveform vs physical distance. INPUT = result path 
+plot_dist(input,'result12');
+
+
+
+%% Find chains
 for id = 1:numData-1 % Load data
     all_input(id) = load(fullfile(input.input_path,['result',num2str(id),num2str(id+1)], "Input.mat")); 
     all_output(id) = load(fullfile(input.input_path,['result',num2str(id),num2str(id+1)],'Output.mat'));
 end
-save(fullfile(input.input_path,'all.mat'),"all_input","all_output")
 [chain_all,z_loc,len] = chain_summary(all_input,all_output,numData);
+save(fullfile(input.input_path,'chain_summary.mat'),"all_input","all_output",'chain_all','z_loc','len')
 fprintf('Chains found. \n')
+
 
 
 %----------Plot chains of interest (waveform, firing rate, original location, drift-corrected location, L2)----------
@@ -67,5 +90,5 @@ end
 plot_fr(fr_all, fr_change, numData, ichain);
 % plot location
 plot_loc(all_input,x_loc_all,z_loc_all, chan_pos, numData,ichain)
-fprintf('Done! \n')
+
 
