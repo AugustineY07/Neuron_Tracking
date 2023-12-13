@@ -4,6 +4,8 @@
 input_path = input.input_path;
 data_path1 = input.data_path1;
 data_path2 = input.data_path2;
+z_step = input.zStep;
+x_step = input.xStep;
 wave1 = readNPY(fullfile(input_path,data_path1,input.wf_name));
 wave2 = readNPY(fullfile(input_path,data_path2,input.wf_name));
 %read channel info
@@ -18,14 +20,14 @@ ylow = 0;
 yhigh = 5000;
 figName = 'example_spike';
 
-plotWaves(peakWf1, peakWf2, xC, yC, 1,1, rowHalfRange, xMax, yhigh, ylow, figName);
+plotWaves(peakWf1, peakWf2, xC, yC, z_step, x_step, 1,1, rowHalfRange, xMax, yhigh, ylow, figName);
 legend('',sprintf('Unit %d',clu_label1),sprintf('Unit %d',clu_label2))
 % title(sprintf('AL032 shank 3 Day %d unit %d and Day 13 unit %d',day1,clu_label1,clu_label2))
 
 
 
 % rowFac=1; colFac=1;
-function [yhigh, ylow] = plotWaves(peakWf1, peakWf2, xC, yC, rowFac, colFac, rowHalfRange, xMax, yhigh, ylow, figName)
+function [yhigh, ylow] = plotWaves(peakWf1, peakWf2, xC, yC,hSep,vSep, rowFac, colFac, rowHalfRange, xMax, yhigh, ylow, figName)
 
 % plot waveforms in rough coordinate positions
 bAxis = 0;  % whether or not to include axes in the figure
