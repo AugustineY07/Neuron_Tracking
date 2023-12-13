@@ -44,8 +44,6 @@ tPadFrac = 0.3; % increase to increase the space between columns
 maxSample = nt;
 colPos = unique(xC); %all x positions
 rowPos = unique(yC); %all y positions
-hSep = colPos(3) - colPos(1); %x position step size
-vSep = rowPos(2) - rowPos(1); %z position step size
 
 % plot setting
 colSpace = maxSample + tPadFrac*maxSample; % horizontal dimensions
