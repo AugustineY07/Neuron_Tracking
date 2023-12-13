@@ -2,27 +2,27 @@
 
 %----------add packages----------
 addpath(genpath('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version')) %NEED CHANGE 
-addpath(genpath('D:\Data\Pipeline\npy\npy-matlab'))
+addpath(genpath('D:\Data\Pipeline\npy\npy-matlab')) %path to your npy directory
 
 %----------define parameter and path----------
 input.input_path = 'C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\'; %main directory, NEED CHANGE 
 input.EMD_path = fullfile(input.input_path,'EMD_input\'); %EMD input directory, NEED CHANGE 
 % Input data
-input.fs = 30000; %acquisition rate
+input.fs = 30000; %acquisition rate, NEED to match your dataset!
 input.ts = 82; %wf time samples
 input.l2_weights = 1500;
-input.threshold = 10;
-input.validation = 0; %no reference data
-input.xStep = 32;
-input.zStep = 20;
-input.dim_mask = logical([1,1,1,0,0,0,0,0,0,1]);
+input.threshold = 10; %z distance threshold for matched units, 10um recommended, can change if needed
+input.validation = 0; %no reference data, set to 1 if you have ground truth
+input.xStep = 32; %space between columns of sites, um (NP 2.0 = 32, can find in the channel map)
+input.zStep = 15; %space between rows of sites, um (NP 2.0 = 15, can find in the channel map)
+input.dim_mask = logical([1,1,1,0,0,0,0,0,0,1]); %default = x,z,y position, waveform distance
 input.dim_mask_physical = logical([1,1,1,0,0,0,0,0,0,0]);
 input.dim_mask_wf = logical([0,0,0,0,0,0,0,0,0,1]);
-input.chan_pos_name = 'channel_positions.npy';
-input.wf_name = 'ksproc_mean_waveforms.npy';
-input.KSLabel_name = 'cluster_KSLabel.tsv';
+input.chan_pos_name = 'channel_positions.npy'; %NEED to match your channel map file name!
+input.wf_name = 'ksproc_mean_waveforms.npy'; %NEED to match your waveform file name!
+input.KSLabel_name = 'cluster_KSLabel.tsv'; %NEED to match your KSlabel file name!
 
-numData = 5; 
+numData = 5; %Number of datasets to match
 
 
 
