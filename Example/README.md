@@ -3,7 +3,7 @@ An example with AL032 shank 1 data used in the manuscript.
 To run the example, please follow the steps below:  
   1. Clone the repo, or download a zip folder
   2. Add the parent folder (.../Neuron_Tracking) to the MATLAB folder with subfolders
-  3. Edit paths in 'Example_run.m' and run.  
+  3. Edit paths and required parameters in 'Example_run.m' and run.  
 
 Input required to run the pipleline with your own data:  
 - channel_map.npy: standard KS2.5 output
