@@ -67,7 +67,7 @@ switch stage
     case 'post'
         [x, fval, L2] = emd_nt(f1, f2, w1, w2, mw1, mw2, chan_pos, dim_mask,l2_weight, xStep, zStep, @weighted_gdf_nt);
         P = reshape(x,[size(f2,1),size(f1,1)]);
-        [C,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        [C,~] = gdm_nt(f1(1,:), f2(1,:), mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt);
         [Cp,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_physical, l2_weight, xStep, zStep, @weighted_gdf_nt);
         [Cw,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_wf, l2_weight, xStep, zStep, @weighted_gdf_nt);
 end
@@ -130,10 +130,10 @@ for nm = 1:np
                     % f1 has no pair, f2 = FP
                     pair_results(nf,4) = -1;
                     pair_results(nf,5) = f1_labels(maxRowInd);
-                    pair_results(nf,6) = C_dist(maxRowInd,f2_ind); %loc+wf EMD distance
-                    pair_results(nf,7) = C_physical(maxRowInd,f2_ind); %loc EMD distance
-                    pair_results(nf,8) = C_wf(maxRowInd,f2_ind); %wf EMD distance
-                    pair_results(nf,9) = abs(f1(maxRowInd,2) - f2(f2_ind,2)); %loc EMD z_distance
+                    pair_results(nf,6) = C_dist(f2_ind,maxRowInd); %loc+wf EMD distance
+                pair_results(nf,7) = C_physical(f2_ind,maxRowInd); %loc EMD distance
+                pair_results(nf,8) = C_wf(f2_ind,maxRowInd); %wf EMD distance
+                pair_results(nf,9) = abs(f1(maxRowInd,2) - f2(f2_ind,2)); %loc EMD z_distance
 
                 else
                     % f2 has no pair, f1 = FP
@@ -153,9 +153,9 @@ for nm = 1:np
                 nTP = nTP + 2;
                 pair_results(nf,4) = f2_labels(maxColInd);
                 pair_results(nf,5) = f1_labels(maxRowInd);
-                pair_results(nf,6) = C_dist(maxRowInd,maxColInd);
-                pair_results(nf,7) = C_physical(maxRowInd,maxColInd); %C_physical(maxRowInd,maxColInd)
-                pair_results(nf,8) = C_wf(maxRowInd,maxColInd);
+                pair_results(nf,6) = C_dist(maxColInd,maxRowInd);
+                pair_results(nf,7) = C_physical(maxColInd,maxRowInd);
+                pair_results(nf,8) = C_wf(maxColInd,maxRowInd); 
                 pair_results(nf,9) = abs(f1(maxRowInd,2) - f2(maxColInd,2));
 
             else
@@ -165,9 +165,9 @@ for nm = 1:np
                 pair_results(nf,3) = 2;
                 pair_results(nf,4) = f2_labels(maxColInd);
                 pair_results(nf,5) = f1_labels(maxRowInd);
-                pair_results(nf,6) = C_dist(maxRowInd,maxColInd);
-                pair_results(nf,7) = C_physical(maxRowInd,maxColInd);
-                pair_results(nf,8) = C_wf(maxRowInd,maxColInd);
+                pair_results(nf,6) = C_dist(maxColInd,maxRowInd);
+                pair_results(nf,7) = C_physical(maxColInd,maxRowInd);
+                pair_results(nf,8) = C_wf(maxColInd,maxRowInd); 
                 pair_results(nf,9) = abs(f1(maxRowInd,2) - f2(maxColInd,2));
             end
         end
@@ -188,7 +188,6 @@ for nm = 1:np
 %         all_results(ip,4) = C_dist(nm,maxColInd); %loc+wf EMD distance
 %         all_results(ip,5) = C_physical(nm,maxColInd); %loc EMD distance
 %         all_results(ip,6) = C_wf(nm,maxColInd); %wf EMD distance
-%         fprintf('nm = %d, maxColInd = %d \n', nm,maxColInd)
         all_results(ip,4) = C_dist(maxColInd,nm); %loc+wf EMD distance
         all_results(ip,5) = C_physical(maxColInd,nm); %loc EMD distance
         all_results(ip,6) = C_wf(maxColInd,nm); %wf EMD distance
