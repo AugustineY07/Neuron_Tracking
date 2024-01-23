@@ -51,5 +51,10 @@ for ir = 1:length(all_output)-1
     len = sum(chain_all ~= 0,2); %chain lengths
 end
 
-save(fullfile(output_path,'chain_summary.mat'), "chain_all", "z_loc", "len");
+if count > 0
+    save(fullfile(output_path,'chain_summary.mat'), "chain_all", "z_loc", "len");
+else
+    fprintf('No chains found.\n');
+end
+
 end

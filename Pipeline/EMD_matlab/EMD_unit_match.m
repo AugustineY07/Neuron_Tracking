@@ -67,7 +67,7 @@ switch stage
     case 'post'
         [x, fval, L2] = emd_nt(f1, f2, w1, w2, mw1, mw2, chan_pos, dim_mask,l2_weight, xStep, zStep, @weighted_gdf_nt);
         P = reshape(x,[size(f2,1),size(f1,1)]);
-        [C,~] = gdm_nt(f1(1,:), f2(1,:), mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        [C,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt);
         [Cp,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_physical, l2_weight, xStep, zStep, @weighted_gdf_nt);
         [Cw,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_wf, l2_weight, xStep, zStep, @weighted_gdf_nt);
 end
@@ -75,6 +75,7 @@ cost = sum(C.*x);
 % C_dist = reshape(C,[size(f1,1),size(f2,1)]);
 % C_physical = reshape(Cp,[size(f1,1),size(f2,1)]);
 % C_wf = reshape(Cw,[size(f1,1),size(f2,1)]);
+
 C_dist = reshape(C,[size(f2,1),size(f1,1)]);
 C_physical = reshape(Cp,[size(f2,1),size(f1,1)]);
 C_wf = reshape(Cw,[size(f2,1),size(f1,1)]);
@@ -191,7 +192,7 @@ for nm = 1:np
         all_results(ip,4) = C_dist(maxColInd,nm); %loc+wf EMD distance
         all_results(ip,5) = C_physical(maxColInd,nm); %loc EMD distance
         all_results(ip,6) = C_wf(maxColInd,nm); %wf EMD distance
-        fprintf('nm = %d, maxColInd = %d \n', nm,maxColInd)
+        % fprintf('nm = %d, maxColInd = %d \n', nm,maxColInd)
         test_idx(nm) = maxColInd; %test if C is recorded correctly
         all_results(ip,7) = abs(f1(nm,2) - f2(maxColInd,2)); %z distance
     end

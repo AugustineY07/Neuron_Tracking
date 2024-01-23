@@ -1,20 +1,19 @@
-function ks_call = readKS2label(fullpath)
+function ks_call = readKS2label(fullpath, nUnit)
 
 fid = fopen(fullpath,'r');
-nUnit = 0;
-%allocate excess space to hold ks calls
-ks_call = zeros([5000,1], 'logical');
-
+% allocate excess space to hold calls
+% Depending on format, the number of calls may be < nUnit
+ks_call = zeros([nUnit,1], 'logical');
 % read line (this will be the header)
 tline = fgetl(fid);
 % read another line (first unit entry)
 tline = fgetl(fid);
 while ischar(tline)
-    nUnit = nUnit + 1;
     ln = split(tline);
+    label = str2num(ln{1});
     call_str = ln{2};
     if strcmp(call_str,'good')
-        ks_call(nUnit) = 1;
+        ks_call(label+1) = 1;
     end
     tline = fgetl(fid);
 end

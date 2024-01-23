@@ -49,7 +49,7 @@ function [x, fval, L2] = emd_nt(F1, F2, W1, W2, mw1, mw2, chan_pos, dim_mask, l2
 
 % ground distance matrix
 [f,L2] = gdm_nt(F1, F2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, Func);
-fprintf('f = %d, L2 = %d\n', f, L2);
+% fprintf('f = %d, L2 = %d\n', f, L2);
 
 % number of feature vectors
 [m a] = size(F1);
@@ -79,5 +79,5 @@ lb = zeros(1, m * n);
 [x, fval] = linprog(f, A, b, Aeq, beq, lb);
 fval = fval / sum(x);
 
-fprintf('x = %d, fval = %d\n', x, fval);
+% fprintf('x = %d, fval = %d\n', x, fval);
 end

@@ -5,7 +5,7 @@ EMD_input_dir = input.EMD_path;
 data_path1 = input.data_path1;
 data_path2 = input.data_path2;
 chan_pos_name = input.chan_pos_name;
-KSLabel_name = input.KSLabel_name;
+KSLabel_name = input.KSLabel_name; % can be any tab delimited file of cluster# and labels. If bUseKSLabel = 1, only 'good' units will be included
 v = input.validation;
 all_z_mode = output.z_mode;
 
@@ -23,8 +23,6 @@ out_fullpath = fullfile(EMD_input_dir, input_name);
 bUseKSlabel = 1;
 
 % get ks calls for each day
-kscall1 = readKS2label(fullfile(input_path,data_path1,KSLabel_name));
-kscall2 = readKS2label(fullfile(input_path,data_path2,KSLabel_name));
 
 % load data
 chan_pos = readNPY(fullfile(input_path,data_path1,chan_pos_name));
@@ -75,6 +73,8 @@ allzero_mw2 = (sum_unit_mw2 == 0);
 
 % get KSgood unit
 if bUseKSlabel
+    kscall1 = readKS2label(fullfile(input_path,data_path1,KSLabel_name),npts_f1);
+    kscall2 = readKS2label(fullfile(input_path,data_path2,KSLabel_name),npts_f2);
     good_unit_1 = kscall1 & ~allzero_mw1;
     good_unit_2 = kscall2 & ~allzero_mw2;
 else

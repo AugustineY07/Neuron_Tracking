@@ -24,7 +24,7 @@ dZ = unitZ(2)-unitZ(1); %difference
 
 % for each unit, calculate the channel z values that will be included
 zIncl = calcRows(chan_pos,unitZ,minZ,maxZ,zStep,nRow);
-fprintf('zIncl = %d\n', zIncl);
+% fprintf('zIncl = %d\n', zIncl);
 
 
 cv = 0;         %for summing correlations
@@ -56,11 +56,11 @@ for i = 1:numel(zIncl(1,:)) %row loop = 11
         end
     end
 end
-fprintf('cv = %d\n', cv);
+% fprintf('cv = %d\n', cv);
 centCorr = cv/nSite;
-fprintf('nSite = %d\n', nSite);
+% fprintf('nSite = %d\n', nSite);
 centL2 = cl2/nSite;
-fprintf('centL2 = %d\n', centL2);
+% fprintf('centL2 = %d\n', centL2);
 end
 
 

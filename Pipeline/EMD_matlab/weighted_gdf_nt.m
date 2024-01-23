@@ -56,7 +56,7 @@ V2 = V2(dim_mask(1:9));
 
 w = dim_weights(dim_mask(1:9));
 diffsq = (V2 - V1).^2;
-fprintf('diffsq = %d\n', diffsq);
+% fprintf('diffsq = %d\n', diffsq);
 if dim_mask(10) ~= 0
     % calculate l2 distance between these waveforms
     [~,wave_l2] = calcCenteredCorrL2(mw1,mw2, chan_pos, zStep, 5); %nRow = 
@@ -69,8 +69,8 @@ end
 
 
 E = sqrt(dot(diffsq,w));
-fprintf('dot = %d\n', dot(diffsq,w));
-fprintf('E = %d\n', E);
+% fprintf('dot = %d\n', dot(diffsq,w));
+% fprintf('E = %d\n', E);
 [~,L2] = calcCenteredCorrL2(mw1,mw2,chan_pos, zStep, 5);
 
 end

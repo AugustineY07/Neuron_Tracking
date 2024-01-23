@@ -1,10 +1,7 @@
 function meas_out = wave_metrics(mw, chan_pos, input)
-% Calculate an array of simple waveform metrics from the mean waveforms for
-% each unit.
-% 1D waveform characteristics based on allen ecephys pipeline
-% Position fitting based on Boussard 2D fit to 1/R
 
 [nUnit, nChan, nt] = size(mw);
+
 pp_all = squeeze(max(mw,[],3)-min(mw,[],3));
 [pp_unit, pk_chan] = max(pp_all,[],2);
 % get background of pp -- this is always nonzero, since it includes the
