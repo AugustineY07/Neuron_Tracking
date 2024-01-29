@@ -19,5 +19,5 @@ while ischar(tline)
 end
 
 ks_call = ks_call(1:nUnit);
-fprintf('%d out of %d units called good\n', sum(ks_call), nUnit);
+%fprintf('%d out of %d units called good\n', sum(ks_call), nUnit);
 end

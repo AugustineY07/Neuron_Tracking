@@ -79,5 +79,5 @@ lb = zeros(1, m * n);
 [x, fval] = linprog(f, A, b, Aeq, beq, lb);
 fval = fval / sum(x);
 
-% fprintf('x = %d, fval = %d\n', x, fval);
+%fprintf('Call to linprog complete. fval = %d\n', fval);
 end

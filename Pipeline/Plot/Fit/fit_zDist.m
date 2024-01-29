@@ -1,13 +1,25 @@
-function fit_zDist
+function estFP_10um = fit_zDist( varargin )
 
-clear all
-
-addpath(genpath('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\')) % NEED CHANGE: Path to you code
-
-% load in arrays of measured distances
-dataDir = 'Z:\zDist_distribution_fitting\'; % NEED CHANGE: Path to you data
-load(fullfile(dataDir,"KS_all.mat")) % NEED CHANGE: Data file name
-zDist_all = EMD_pair(:,7)'; % NEED CHANGE: z distances
+if (length(varargin) == 0)
+    clear all;
+    % Edit parameters manually
+    % Input data for the fit is an array of z distances, here extracted
+    % from a summary datafile. In standard pipeline output, z distances are
+    % in column 7 of EMD_postN.all_results or in the results folder Output.mat 
+    % output.all_results_post (along with more diagnostic metrics).
+    genpath('C:\Users\labadmin\Desktop\Neuron Tracking Pipeline\User version\') % NEED CHANGE: Path to the repo
+    % load in arrays of measured distances
+    dataDir = 'Z:\zDist_distribution_fitting\'; % NEED CHANGE: Path to you data
+    load(fullfile(dataDir,"KS_all.mat")) % NEED CHANGE: Data file name
+    zDist_all = EMD_pair(:,7)'; % NEED CHANGE: z distances
+    data_label = '';
+else
+    % fit the zDist_all data passed in 
+    inputCell = varargin(1);
+    zDist_all = inputCell{1};   % array of distances
+    inputCell = varargin(2);
+    data_label = inputCell{1};  % label for graphs
+end 
 
 % edges for histogramming the distributions
 edges = (0:2:100);
@@ -44,8 +56,12 @@ plot(bin_centers,pdelta_calc,'LineWidth',3); hold on;
 scatter( bin_centers, all_cnts,30, 'filled', 'square'); hold on;
 plot(bin_centers,CIF,':k','LineWidth',1.5)
 ylim([0 inf])
-title('Fit Result for z Distance distributions');
-legend('Location', 'Best');
+if isempty(data_label)
+    title('Fit Result for z Distance distributions');
+else
+    title(sprintf('Fit Result for %s', data_label),'Interpreter','none');
+end
+legend('Location', 'northeast');
 legend('Folded Gaussian + Exponential fit','Unit count data','95% CI upper bound','95% CI lower bound')
 xlabel('Z distances (\mu m)');
 ylabel('Counts');
@@ -81,13 +97,20 @@ plot(xRmin, yRmin, 'or'); hold on;
 text(0,yRmin, sprintf('%.2f',yRmin), 'Horiz','right', 'Vert','middle','FontSize',16,'Color','r')     % Horizontal Line Axis Label
 
 ylim([0 inf])
-title('False Positive fraction vs. \Deltaz threshold','FontSize',18,'FontWeight','Bold','Color','k');
+if isempty(data_label)
+    title('False Positive fraction vs. \Deltaz threshold','FontSize',18,'FontWeight','Bold','Color','k');
+else
+    title(sprintf('FP vs. thresh for %s', data_label),'Interpreter','none');
+end
 ylabel('Fraction false positive','FontSize',18,'FontWeight','Bold','Color','k');
 xlabel('\Deltaz threshold (\mum)','FontSize',18,'FontWeight','Bold','Color','k');
 ax = gca;
 ax.FontSize = 18; %tick font
 ax.Box = 'off'; %remove tick box
 set(ax,'TickDir','out'); %tickmark towards outside
+
+
+estFP_10um = fp_th(th_vals==10);
 
 end
 

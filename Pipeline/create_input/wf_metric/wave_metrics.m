@@ -1,5 +1,6 @@
-function meas_out = wave_metrics(mw, chan_pos, input)
+function meas_out = wave_metrics(mw, input)
 
+chan_pos = input.chan_pos;
 [nUnit, nChan, nt] = size(mw);
 
 pp_all = squeeze(max(mw,[],3)-min(mw,[],3));

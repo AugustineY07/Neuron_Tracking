@@ -2,8 +2,10 @@
 % Input: kilosort cluster label, channel map, mean waveforms, 
 % Output: Unit match assignment
 % For more comparisons, users need to write their own loops
-function NT_main(input, chan_pos, chan_map, mwf1, mwf2) 
+function NT_main(input, mwf1, mwf2) 
 
+chan_pos = input.chan_pos;
+chan_map = input.chan_map;
 % if the number of channels in mw differ from chan_map, assume mw is the
 % original data including all channels, and select only those included in
 % the sort.
@@ -16,8 +18,8 @@ if nChanPos < nChanMW
 end
 
 % Estimate location 
-wf_metrics1 = wave_metrics(mwf1, chan_pos, input); %col 9,10,11 = x,z,y
-wf_metrics2 = wave_metrics(mwf2, chan_pos, input);
+wf_metrics1 = wave_metrics(mwf1, input); %col 9,10,11 = x,z,y
+wf_metrics2 = wave_metrics(mwf2, input);
 
 % Estimate drift
 output.threshold = input.threshold;
@@ -28,6 +30,7 @@ output = EMD_unit_match(input,output,'pre');
 fprintf('Pre-correction match found! \n')
 [output.diffZ,edges] = z_estimate(input);
 output.z_mode = kernelModeEstimate(output.diffZ);
+
 h = findobj('type', 'figure');
 curr_fig_count = numel(h);
 figure(curr_fig_count+1)

@@ -1,14 +1,14 @@
-function plot_unit(chan_pos,input,result_file,EMD_data)
+function plot_unit(input)
 % plot matched units on a probe
 
-load(fullfile(input.input_path,result_file,'Output.mat'));
+load(fullfile(input.result_path,'Output.mat'));
 matched_units = output.results_wth;
-points = load(fullfile(input.EMD_path,EMD_data));
+points = load(fullfile(input.EMD_path,input.filename_post));
 f1 = points.f1;
 f1_label = points.f1_labels;
 f2 = points.f2;
 f2_label = points.f2_labels;
-
+chan_pos = input.chan_pos;
 
 
 h1 = figure();

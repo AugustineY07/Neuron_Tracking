@@ -1,6 +1,8 @@
-function plot_waveform(input, chan_map, chan_pos, clu_label1, clu_label2)
+function plot_waveform(input, clu_label1, clu_label2)
 % plot waveform traces of matched units
 
+chan_pos = input.chan_pos;
+chan_map = input.chan_map;
 input_path = input.input_path;
 data_path1 = input.data_path1;
 data_path2 = input.data_path2;

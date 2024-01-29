@@ -4,7 +4,6 @@ input_path = input.input_path;
 EMD_input_dir = input.EMD_path;
 data_path1 = input.data_path1;
 data_path2 = input.data_path2;
-chan_pos_name = input.chan_pos_name;
 KSLabel_name = input.KSLabel_name; % can be any tab delimited file of cluster# and labels. If bUseKSLabel = 1, only 'good' units will be included
 v = input.validation;
 all_z_mode = output.z_mode;
@@ -25,7 +24,7 @@ bUseKSlabel = 1;
 % get ks calls for each day
 
 % load data
-chan_pos = readNPY(fullfile(input_path,data_path1,chan_pos_name));
+chan_pos = input.chan_pos;
 mw1 = mwf1;
 mw2 = mwf2;
 wm1 = wf_metrics1;
@@ -70,17 +69,29 @@ allzero_mw1 = (sum_unit_mw1 == 0);
 sum_unit_mw2 = sum(sum(mw2,[3]),[2]);
 allzero_mw2 = (sum_unit_mw2 == 0);
 
+% Limit to particular shank
+if isfield(input,'shank') && input.shank >= 0
+    shank_center = 32 + input.shank*250;  % for 2.0 probes, chan_pos including offset
+    onshank_mw1 = abs(wm1(:,metrics_ind(1))-shank_center) < 100;
+    onshank_mw2 = abs(wm2(:,metrics_ind(1))-shank_center) < 100;
+else
+    onshank_mw1 = ones([npts_f1,1]);
+    onshank_mw2 = ones([npts_f2,1]);
+end
 
 % get KSgood unit
 if bUseKSlabel
     kscall1 = readKS2label(fullfile(input_path,data_path1,KSLabel_name),npts_f1);
     kscall2 = readKS2label(fullfile(input_path,data_path2,KSLabel_name),npts_f2);
-    good_unit_1 = kscall1 & ~allzero_mw1;
-    good_unit_2 = kscall2 & ~allzero_mw2;
+    good_unit_1 = kscall1 & ~allzero_mw1 & onshank_mw1;
+    good_unit_2 = kscall2 & ~allzero_mw2 & onshank_mw2;
 else
-    good_unit_1 = ~allzero_mw1;
-    good_unit_2 = ~allzero_mw2;
+    good_unit_1 = ~allzero_mw1 & onshank_mw1;
+    good_unit_2 = ~allzero_mw2 & onshank_mw2;
 end
+
+fprintf('Number of units to include in match: %d, %d\n', sum(good_unit_1), sum(good_unit_2));
+
 f1_good_orig = find(good_unit_1); % original 1-based unit labels for KSgood units
 f2_good_orig = find(good_unit_2);
 f1 = f1(good_unit_1,:);

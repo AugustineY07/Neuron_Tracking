@@ -8,6 +8,7 @@ numChain = 200; %set to a number large number
 z_loc = zeros(numChain,numData); %hold z locations
 chain_all = zeros(numChain,numData); %arbituray length, hold chains
 count = 0;
+len = [];
 for ir = 1:length(all_output)-1
     EMD_path = all_input(ir).input.EMD_path;
     pair1 = all_output(ir).output.all_results_post; %KSgood pair label in day 1
@@ -52,7 +53,7 @@ for ir = 1:length(all_output)-1
 end
 
 if count > 0
-    save(fullfile(output_path,'chain_summary.mat'), "chain_all", "z_loc", "len");
+    save(fullfile(output_path,'chain_summary.mat'),"all_input","all_output",'chain_all','z_loc','len')
 else
     fprintf('No chains found.\n');
 end
