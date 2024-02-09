@@ -1,16 +1,26 @@
 function L2_weight = plot_wf(all_input, full_chain, L2_weight, chan_pos, numData, ichain, id)
 % figure dimensions
-fwidth = 10; % figure width, in cm
-fheight = 1.5*fwidth; % adjust to set aspect ratio
 rowSpace = 600; % uV, box height
 tPadFrac = 0.3; % increase to increase the space between columns
-
+numCol_to_plot = 2;
 
 input_path = all_input(id).input.input_path;
 data_path1 = all_input(id).input.data_path1;
 data_path2 = all_input(id).input.data_path2;
-wave1 = readNPY(fullfile(input_path,data_path1,'ksproc_mean_waveforms.npy'));
-wave2 = readNPY(fullfile(input_path,data_path2,'ksproc_mean_waveforms.npy'));
+wave1 = readNPY(fullfile(input_path,data_path1,all_input(id).input.wf_name));
+wave2 = readNPY(fullfile(input_path,data_path2,all_input(id).input.wf_name));
+% if the number of channels in mw differ from chan_map, assume mw is the
+% original data including all channels, and select only those included in
+% the sort.
+[nChanPos, ~] = size(all_input(id).input.chan_pos);
+[~, nChanMW, ~] = size(wave1);
+
+if nChanPos < nChanMW
+    wave1 = wave1(:,all_input(id).input.chan_map+1,:);
+    wave2 = wave2(:,all_input(id).input.chan_map+1,:);
+end
+
+
 %read channel info
 xC = chan_pos(:,1); yC = chan_pos(:,2);
 
@@ -21,7 +31,7 @@ peakWf1 = squeeze(wave1(clu_label1,:,:)); %wf of one cluster, get by the cluster
 peakWf2 = squeeze(wave2(clu_label2,:,:));
 
 % plot setting
-[nChan,maxSample] = size(peakWf1);
+[~,maxSample] = size(peakWf1);
 colPos = unique(xC); %all x positions
 rowPos = unique(yC); %all y positions
 hSep = colPos(2) - colPos(1); %x position step size = 32
@@ -32,13 +42,15 @@ offset = max(peakWf1,[],2) - min(peakWf1,[],2);
 [~, maxInd] = max(offset);
 currentRow = (yC(maxInd)-min(yC))/vSep; %current row, count from 0
 startRow = max([currentRow-2,0]);
-startSite = find(yC == startRow*vSep+min(yC),1,'first');
 endRow = min([currentRow+2,(max(yC)-min(yC))/vSep]); %number of rows below
-endSite = find(yC == endRow*vSep+min(yC),1,'last');
-peakRow(id) = startRow; %relative location of peak row, use for alignment
-numSite = (endRow - startRow + 1)*2; %number of sites plotted, might involve 1 reference site
-x_site = repmat([min(xC),max(xC)],1,5);
-rows = repelem([startRow:1:endRow],2);
+numSite = (endRow - startRow + 1)*numCol_to_plot; %number of sites plotted, might involve 1 reference site
+peakX = xC(maxInd);
+% get x positions of columns_to_plot nearest peak X
+[~,sort_order] = sort(abs(colPos-peakX));
+x_to_incl = colPos(sort_order(1:numCol_to_plot));
+x_site = repmat([x_to_incl],1,5);
+%x_site = repmat([min(xC),max(xC)],1,5);
+rows = repelem([startRow:1:endRow],numCol_to_plot);
 siteCount = 0;
 for isite = 1:numSite %find relevant site waveforms
     this_site = find(xC == x_site(isite) & yC == rows(isite)*vSep+min(yC));
@@ -52,17 +64,14 @@ for isite = 1:numSite %find relevant site waveforms
 end
 
 %cluster 2
+% line up maximum rows for the two units. plot the same x sites
 offset = max(peakWf2,[],2) - min(peakWf2,[],2);
 [~, maxInd] = max(offset);
 currentRow = (yC(maxInd)-min(yC))/vSep; %current row, count from 0
 startRow = max([currentRow-2,0]);
-startSite = find(yC == startRow*vSep+min(yC),1,'first');
 endRow = min([currentRow+2,(max(yC)-min(yC))/vSep]); %number of rows below
-endSite = find(yC == endRow*vSep+min(yC),1,'last');
-peakRow(id+1) = startRow; %relative location of peak row, use for alignment
 
-numSite = (endRow - startRow + 1)*2;
-x_site = repmat([min(xC),max(xC)],1,5);
+
 rows = repelem([startRow:1:endRow],2);
 siteCount = 0;
 for isite = 1:numSite %find relevant site index
@@ -81,7 +90,6 @@ end
 xMax = 40;
 rowFac = 1; colFac = 1;
 colSpace = maxSample + tPadFrac*maxSample; % start of 2nd box in row
-xlow = -0.5*colSpace;
 xhigh = (xMax/hSep)*colSpace*colFac;
 % want 0:nt-1 to equal hSep
 tscale = ((xhigh/xMax)*hSep)/colSpace; % points in hSep = 1

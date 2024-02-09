@@ -49,28 +49,36 @@ dim_weights(10) = l2_weight; % 'L2 norm' (estimated, need to run some bootstrapp
 % mw1 = squeeze(mw1(i,:,:));
 % mw2 = squeeze(mw2(j,:,:));
 
+% calculate diffZ and diffX before applying mask
+diffX = abs(V2(1) - V1(1));
+diffZ = abs(V2(2) - V1(2));
+
 V1 = V1(dim_mask(1:9));
 V2 = V2(dim_mask(1:9));
-%fprintf('V1 = %d\n', V1);
-%fprintf('V2 = %d\n', V2);
 
 w = dim_weights(dim_mask(1:9));
 diffsq = (V2 - V1).^2;
-fprintf('diffsq = %d\n', diffsq);
+
+z_lim = 500;
+x_lim = 100;
+
 if dim_mask(10) ~= 0
-    % calculate l2 distance between these waveforms
-    [~,wave_l2] = calcCenteredCorrL2(mw1,mw2, chan_pos, zStep, 5); %nRow = 
+    % the L2 calculation compares waveforms centered at peak z for each
+    % unit, to allow for moderate drift. Very large drift in z or x is physically
+    % unreasonable, so only calculate real L2 for units within limits
+    if (diffX < z_lim && diffZ < x_lim)
+        % calculate l2 distance between these waveforms
+        [~,wave_l2] = calcCenteredCorrL2(mw1,mw2, chan_pos, zStep, 5); % last param = nrow
+    else
+        wave_l2 = 2; % Largest possible value of normalized L2 diff
+    end
     diffsq = [diffsq,wave_l2^2];
     w = [w,dim_weights(10)]; %weights for all parameters
+    L2 = wave_l2; % if calculating return L2 for diagnostics
+else
+    L2 = 0;
 end
-%fprintf('wave_l2 = %d\n', wave_l2);
-%fprintf('w = %d\n', w);
-%fprintf('diffsq = %d\n', diffsq);
-
 
 E = sqrt(dot(diffsq,w));
-fprintf('dot = %d\n', dot(diffsq,w));
-fprintf('E = %d\n', E);
-[~,L2] = calcCenteredCorrL2(mw1,mw2,chan_pos, zStep, 5);
 
 end

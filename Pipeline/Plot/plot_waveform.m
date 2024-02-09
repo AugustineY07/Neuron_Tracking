@@ -1,6 +1,8 @@
-% function plot_waveform(input,chan_pos,clu_label1,clu_label2)
+function plot_waveform(input, clu_label1, clu_label2)
 % plot waveform traces of matched units
 
+chan_pos = input.chan_pos;
+chan_map = input.chan_map;
 input_path = input.input_path;
 data_path1 = input.data_path1;
 data_path2 = input.data_path2;
@@ -8,6 +10,19 @@ z_step = input.zStep;
 x_step = input.xStep;
 wave1 = readNPY(fullfile(input_path,data_path1,input.wf_name));
 wave2 = readNPY(fullfile(input_path,data_path2,input.wf_name));
+
+% if the number of channels in mw differ from chan_map, assume mw is the
+% original data including all channels, and select only those included in
+% the sort.
+[nChanPos, ~] = size(chan_pos);
+[~, nChanMW, ~] = size(wave1);
+
+if nChanPos < nChanMW
+    wave1 = wave1(:,chan_map+1,:);
+    wave2 = wave2(:,chan_map+1,:);
+end
+
+
 %read channel info
 xC = chan_pos(:,1); yC = chan_pos(:,2);
 
@@ -20,10 +35,10 @@ ylow = 0;
 yhigh = 5000;
 figName = 'example_spike';
 
-plotWaves(peakWf1, peakWf2, xC, yC, z_step, x_step, 1,1, rowHalfRange, xMax, yhigh, ylow, figName);
+plotWaves(peakWf1, peakWf2, xC, yC, x_step, z_step, 1,1, rowHalfRange, xMax, yhigh, ylow, figName);
 legend('',sprintf('Unit %d',clu_label1),sprintf('Unit %d',clu_label2))
 % title(sprintf('AL032 shank 3 Day %d unit %d and Day 13 unit %d',day1,clu_label1,clu_label2))
-
+end
 
 
 % rowFac=1; colFac=1;

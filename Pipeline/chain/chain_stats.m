@@ -1,25 +1,20 @@
 % calculate L2, FR, and locations of all chains
-function [L2_weight,fr_all,fr_change,x_loc,z_loc] = chain_stats(all_input,all_output,full_chain,numData,output_path)
+function [L2_value,fr_all,fr_change,x_loc,z_loc] = chain_stats(all_input,all_output,full_chain,numData,output_path)
 
 for ichain = 1:size(full_chain,1)
     for id = 1:numData-1
+        
         % current clu
         clu_label1 = full_chain(ichain,id);
         clu_label2 = full_chain(ichain,id+1);
 
-        % Calcuate L2 weight between clu_label1,clu_label2
-        L2 = reshape(all_output(id).output.L2, all_output(id).output.KSgood_f1, all_output(id).output.KSgood_f2);
-        L2_wt = L2'.*all_output(id).output.P_post;
-
         pair_results = load(fullfile(all_input(id).input.EMD_path,['EMD_post',num2str(id),'.mat']));
-        clusters1 = pair_results.f1_labels; %get cluster label
-        clusters2 = pair_results.f2_labels;
-        idx1 = find(clusters1 == clu_label1); %get cluster idx in all KSgood
-        idx2 = find(clusters2 == clu_label2);
-        L2_weight(ichain,id) = L2_wt(idx2,idx1); %get L2 weight
-
-
-
+        % pair_results.all_results table has a line for each pair created
+        % => number of lines = min( number in f1, number in f2).
+        % column 2 = f2 label, column 3 = f1 label, column 4 = unweighted
+        % L2 value.
+        row_idx = find(pair_results.all_results(:,2) == clu_label2);
+        L2_value(ichain,id) = pair_results.all_results(row_idx,4);
 
 
         % Calculate firing rate change
@@ -28,15 +23,15 @@ for ichain = 1:size(full_chain,1)
         tb2 = readtable(fullfile(all_input(id).input.input_path, all_input(id).input.data_path2, 'metrics.csv'));
 
         % find FR
-        fr{id} = table2array(tb1(:,2)); %get unit firing rate
+        fr{id} = tb1.firing_rate;
+        fr{id+1} = tb2.firing_rate;
         fr_ave(id) = sum(fr{id})/size(tb1,1); %average across num clu
-        fr{id+1} = table2array(tb2(:,2));
         fr_ave(id+1) = sum(fr{id+1})/size(tb2,1);
 
 
         % find all clusters
-        clu1 = table2array(tb1(:,1))+1;
-        clu2 = table2array(tb2(:,1))+1;
+        clu1 = tb1.cluster_id+1;
+        clu2 = tb2.cluster_id+1;
 
         % calculate fold change
         idx_row_ref = find(clu_label1 == clu1); %idx in all day 1 clusters
@@ -46,8 +41,6 @@ for ichain = 1:size(full_chain,1)
         fr_all(ichain,id+1) = fr{id+1}(idx_row_ref2);
         fr_fold_all(ichain,id+1) = fr{id+1}(idx_row_ref2)/fr_ave(id+1);
         fr_change(ichain,id) = (fr_fold_all(ichain,id+1)-fr_fold_all(ichain,id))/fr_fold_all(ichain,id); %percentage change of FR compare to prior day
-
-
 
 
         % find z locations
@@ -68,5 +61,5 @@ for ichain = 1:size(full_chain,1)
     end
 end
 
-save(fullfile(output_path,'chain_stats.mat'),'full_chain','L2_weight','fr_all','fr_change','z_loc','x_loc')
+save(fullfile(output_path,'chain_stats.mat'),'full_chain','L2_value','fr_all','fr_change','z_loc','x_loc')
 end

@@ -1,8 +1,6 @@
 % Match units using EMD
 function output = EMD_unit_match(input,output,stage)
 
-%stage = 'post'
-
 
 dim_mask = input.dim_mask;
 dim_mask_physical = input.dim_mask_physical;
@@ -12,6 +10,12 @@ rootD = input.EMD_path;
 v = input.validation;
 xStep = input.xStep;
 zStep = input.zStep;
+
+if isfield(input,'diagDistCalc')
+    diagDistCalc = input.diagDistCalc;
+else
+    diagDistCalc = false;
+end
 
 % output path
 switch stage
@@ -59,26 +63,31 @@ Cw = [];
 
 switch stage
     case 'pre'
-        [x, fval, L2] = emd_nt(f1, f2, w1, w2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        [x, fval, C] = emd_nt(f1, f2, w1, w2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt);
         P = reshape(x,[size(f2,1),size(f1,1)]);
-        [C,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt); % Distance matrix
-        [Cp,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_physical, l2_weight, xStep, zStep, @weighted_gdf_nt);
-        [Cw,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_wf, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        if diagDistCalc
+            [Cp,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_physical, l2_weight, xStep, zStep, @weighted_gdf_nt);
+            [Cw,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_wf, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        else
+            Cp = zeros(size(C));
+            Cw = zeros(size(C));
+        end
     case 'post'
-        [x, fval, L2] = emd_nt(f1, f2, w1, w2, mw1, mw2, chan_pos, dim_mask,l2_weight, xStep, zStep, @weighted_gdf_nt);
+        [x, fval, C] = emd_nt(f1, f2, w1, w2, mw1, mw2, chan_pos, dim_mask,l2_weight, xStep, zStep, @weighted_gdf_nt);
         P = reshape(x,[size(f2,1),size(f1,1)]);
-        [C,~] = gdm_nt(f1(1,:), f2(1,:), mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, @weighted_gdf_nt);
-        [Cp,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_physical, l2_weight, xStep, zStep, @weighted_gdf_nt);
-        [Cw,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_wf, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        if diagDistCalc
+            [Cp,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_physical, l2_weight, xStep, zStep, @weighted_gdf_nt);
+            [Cw,~] = gdm_nt(f1, f2, mw1, mw2, chan_pos, dim_mask_wf, l2_weight, xStep, zStep, @weighted_gdf_nt);
+        else
+            Cp = zeros(size(C));
+            Cw = zeros(size(C));
+        end
 end
 cost = sum(C.*x);
-% C_dist = reshape(C,[size(f1,1),size(f2,1)]);
-% C_physical = reshape(Cp,[size(f1,1),size(f2,1)]);
-% C_wf = reshape(Cw,[size(f1,1),size(f2,1)]);
-C_dist = reshape(C,[size(f2,1),size(f1,1)]);
+
+C_unweighted_wf_dist = reshape(C,[size(f2,1),size(f1,1)]);
 C_physical = reshape(Cp,[size(f2,1),size(f1,1)]);
 C_wf = reshape(Cw,[size(f2,1),size(f1,1)]);
-
 
 
 % summary matches or loop over the known matches (f2_same with values ~= NaN)
@@ -98,16 +107,41 @@ ip = 0; %counter for all pairs found
 
 for nm = 1:np
     currCol = P(:,nm);
-    [~, maxColInd] = max(currCol);
+    [~, maxColInd] = max(currCol); % index of best match in f2
+
+    % If unit nm in f1 was matched to a unit in f2, add it to the array of all_results
+    % JIC note: moved calculation of physical and waveform distance to this
+    % loop, so it is only performed for pairs.
+    if max(currCol) > 0
+        ip = ip + 1;
+        all_results(ip,2) = f2_labels(maxColInd); %f2 label
+        all_results(ip,3) = f1_labels(nm); %f1 label
+
+        all_results(ip,4) = C_unweighted_wf_dist(maxColInd,nm); %loc+wf EMD distance
+
+        [all_res_loc_dist, ~] = weighted_gdf_nt(f2(maxColInd, :), f1(nm, :), ...
+            squeeze(mw2(maxColInd,:,:)), squeeze(mw1(nm,:,:)), chan_pos, ...
+            dim_mask_physical, l2_weight, xStep, zStep);
+
+        [all_res_wf_dist, ~] = weighted_gdf_nt(f2(maxColInd, :), f1(nm, :), ...
+            squeeze(mw2(maxColInd,:,:)), squeeze(mw1(nm,:,:)), chan_pos, ...
+            dim_mask_wf, l2_weight, xStep, zStep);
+
+        all_results(ip,5) = all_res_loc_dist; % distance in physical space
+        all_results(ip,6) = all_res_wf_dist; % waveform distance
+        all_results(ip,7) = abs(f1(nm,2) - f2(maxColInd,2)); %z distance
+        test_idx(nm) = maxColInd; %test if C is recorded correctly
+    end  % if block for all pairs
 
     if v == 1
         if ~isnan(f2_same_ind(nm))
+            % this f1 index (nm) had a reference match in f2
             nf = nf + 1;
             pair_results(nf,1) = f1_labels(nm);
-            pair_results(nf,2) = f2_labels(f2_same_ind(nm));
-            f2_ind = find(f2_labels==pair_results(nf,2));
-            currRow = P(f2_ind,:);
-            [~, maxRowInd] = max(currRow);
+            pair_results(nf,2) = f2_labels(f2_same_ind(nm)); % label of the ref match
+            f2_ind = find(f2_labels==pair_results(nf,2)); % index of the ref match
+            currRow = P(f2_ind,:);  % row that corresponds to the correct match for nm
+            [~, maxRowInd] = max(currRow); % for a correct match, maxRowInd = nm
 
             if sum(currCol) == 0 && sum(currRow) == 0
                 % no match called for either member this pair with any units
@@ -130,71 +164,84 @@ for nm = 1:np
                     % f1 has no pair, f2 = FP
                     pair_results(nf,4) = -1;
                     pair_results(nf,5) = f1_labels(maxRowInd);
-                    pair_results(nf,6) = C_dist(f2_ind,maxRowInd); %loc+wf EMD distance
-                pair_results(nf,7) = C_physical(f2_ind,maxRowInd); %loc EMD distance
-                pair_results(nf,8) = C_wf(f2_ind,maxRowInd); %wf EMD distance
-                pair_results(nf,9) = abs(f1(maxRowInd,2) - f2(f2_ind,2)); %loc EMD z_distance
+                    % calculate distances for the incorrect paring of
+                    % f2_ind to its EMD match.
+                    pair_results(nf,6) = C_unweighted_wf_dist(f2_ind, maxRowInd); %loc+wf EMD distance
+                    [loc_dist, ~] = weighted_gdf_nt(f2(f2_ind, :), f1(maxRowInd, :), ...
+                        squeeze(mw2(f2_ind,:,:)), squeeze(mw1(maxRowInd,:,:)), chan_pos, ...
+                        dim_mask_physical, l2_weight, xStep, zStep);
+                    [wf_dist, ~] = weighted_gdf_nt(f2(f2_ind, :), f1(maxRowInd, :), ...
+                        squeeze(mw2(f2_ind,:,:)), squeeze(mw1(maxRowInd,:,:)), chan_pos, ...
+                        dim_mask_wf, l2_weight, xStep, zStep);
+                    pair_results(nf,7) = loc_dist; % distance in physical space
+                    pair_results(nf,8) = wf_dist; % waveform distance
+                    pair_results(nf,9) = abs(f1(maxRowInd,2) - f2(f2_ind,2)); % z distance
+
+%                 pair_results(nf,7) = C_physical(f2_ind,maxRowInd); %loc EMD distance
+%                 pair_results(nf,8) = C_wf(f2_ind,maxRowInd); %wf EMD distance
+
 
                 else
-                    % f2 has no pair, f1 = FP
+                    % f2 matched to this has no validated pair, so f1 = FP
+                    % these are the distances already calculated for this
+                    % pair in the all_results block above
                     pair_results(nf,4) = f2_labels(maxColInd);
                     pair_results(nf,5) = -1;
-%                     pair_results(nf,6) = C_dist(nm,maxColInd);
-%                     pair_results(nf,7) = C_physical(nm,maxColInd);
-%                     pair_results(nf,8) = C_wf(nm,maxColInd); %nm,maxColInd
-                    pair_results(nf,6) = C_dist(maxColInd,nm);
-                    pair_results(nf,7) = C_physical(maxColInd,nm);
-                    pair_results(nf,8) = C_wf(maxColInd,nm); %nm,maxColInd
+                    pair_results(nf,6) = C_unweighted_wf_dist(maxColInd,nm);
+                    pair_results(nf,6) = all_res_loc_dist;
+                    pair_results(nf,7) = all_res_wf_dist;
                     pair_results(nf,9) = abs(f1(nm,2) - f2(maxColInd,2));
 
+%                     pair_results(nf,7) = C_physical(maxColInd,nm);
+%                     pair_results(nf,8) = C_wf(maxColInd,nm); %nm,maxColInd
+                   
                 end
             elseif maxColInd == f2_same_ind(nm)
-                % match to correct unit
+                % match to correct unit. distances are already calculated
                 nTP = nTP + 2;
                 pair_results(nf,4) = f2_labels(maxColInd);
                 pair_results(nf,5) = f1_labels(maxRowInd);
-                pair_results(nf,6) = C_dist(maxColInd,maxRowInd);
-                pair_results(nf,7) = C_physical(maxColInd,maxRowInd);
-                pair_results(nf,8) = C_wf(maxColInd,maxRowInd); 
+                pair_results(nf,6) = C_unweighted_wf_dist(maxColInd,maxRowInd);
+                pair_results(nf,7) = all_res_loc_dist;
+                pair_results(nf,8) = all_res_wf_dist; 
                 pair_results(nf,9) = abs(f1(maxRowInd,2) - f2(maxColInd,2));
 
             else
-                % both units matched to other incorrect
-                % units
+                % both units in a ref matched to other incorrect
+                % units. Record the distances from te f2 ref unit to its incorrect EMD match 
                 nFP = nFP + 2;
                 pair_results(nf,3) = 2;
                 pair_results(nf,4) = f2_labels(maxColInd);
                 pair_results(nf,5) = f1_labels(maxRowInd);
-                pair_results(nf,6) = C_dist(maxColInd,maxRowInd);
-                pair_results(nf,7) = C_physical(maxColInd,maxRowInd);
-                pair_results(nf,8) = C_wf(maxColInd,maxRowInd); 
-                pair_results(nf,9) = abs(f1(maxRowInd,2) - f2(maxColInd,2));
+                pair_results(nf,6) = C_unweighted_wf_dist(f2_ind, maxRowInd); %loc+wf EMD distance
+                [loc_dist, ~] = weighted_gdf_nt(f2(f2_ind, :), f1(maxRowInd, :), ...
+                    squeeze(mw2(f2_ind,:,:)), squeeze(mw1(maxRowInd,:,:)), chan_pos, ...
+                    dim_mask_physical, l2_weight, xStep, zStep);
+                [wf_dist, ~] = weighted_gdf_nt(f2(f2_ind, :), f1(maxRowInd, :), ...
+                    squeeze(mw2(f2_ind,:,:)), squeeze(mw1(maxRowInd,:,:)), chan_pos, ...
+                    dim_mask_wf, l2_weight, xStep, zStep);
+                pair_results(nf,7) = loc_dist; % distance in physical space
+                pair_results(nf,8) = wf_dist; % waveform distance
+                pair_results(nf,9) = abs(f1(maxRowInd,2) - f2(f2_ind,2)); % z distance
+% previous calculation, which gives distance from the incorrect match to f1
+%  (maxColInd) to the incorrect match for f2(maxRowInd)
+%                 pair_results(nf,6) = C_unweighted_wf_dist(maxColInd,maxRowInd);
+%                 pair_results(nf,7) = C_physical(maxColInd,maxRowInd);
+%                 pair_results(nf,8) = C_wf(maxColInd,maxRowInd); 
+%                 pair_results(nf,9) = abs(f1(maxRowInd,2) - f2(maxColInd,2));
             end
         end
-    end
+        
+        % mark this row in all_results as having reference info
+        pair_idx1 = find(pair_results(:,1) == all_results(ip,3));
+        pair_idx2 = find(pair_results(:,2) == all_results(ip,2));
+        if (pair_idx1 == pair_idx2 && pair_results(pair_idx1,3) == 0) %check if f1 and f2 label are in the same row
+            all_results(ip,1) = 1; %has ref or not
+        end
+       
+    end         % end of block for validation comparison
 
-    % all results
-    if max(currCol) > 0
-        ip = ip + 1;
-        all_results(ip,2) = f2_labels(maxColInd); %f2 label
-        all_results(ip,3) = f1_labels(nm); %f1 label
-        if v == 1
-            pair_idx1 = find(pair_results(:,1) == all_results(ip,3));
-            pair_idx2 = find(pair_results(:,2) == all_results(ip,2));
-            if (pair_idx1 == pair_idx2 & pair_results(pair_idx1,3) == 0) %check if f1 and f2 label are in the same row
-                all_results(ip,1) = 1; %has ref or not
-            end
-        end
-%         all_results(ip,4) = C_dist(nm,maxColInd); %loc+wf EMD distance
-%         all_results(ip,5) = C_physical(nm,maxColInd); %loc EMD distance
-%         all_results(ip,6) = C_wf(nm,maxColInd); %wf EMD distance
-        all_results(ip,4) = C_dist(maxColInd,nm); %loc+wf EMD distance
-        all_results(ip,5) = C_physical(maxColInd,nm); %loc EMD distance
-        all_results(ip,6) = C_wf(maxColInd,nm); %wf EMD distance
-        fprintf('nm = %d, maxColInd = %d \n', nm,maxColInd)
-        test_idx(nm) = maxColInd; %test if C is recorded correctly
-        all_results(ip,7) = abs(f1(nm,2) - f2(maxColInd,2)); %z distance
-    end
+
 end
 all_results = all_results(all_results(:,7)>0,:);
 
@@ -244,7 +291,7 @@ switch stage
             output.pair_results_pre = pair_results;
         end
         output.C_pre = C;
-        output.cost_pre = cost;
+        output.cost_pre = cost;  % note that this cost is the unweighted L2 * P
         output.P_pre = P;
         output.all_results_pre = all_results;
         output.x_pre = x;
@@ -260,17 +307,17 @@ switch stage
             output.pair_results_post = pair_results;
         end
         output.C_post = C;
-        output.cost_post = cost;
+        output.cost_post = cost;         % note that this cost is the unweighted L2 * P
         output.P_post = P;
         output.all_results_post = all_results;
         output.x_post = x;
 
         output.KSgood_f1 = size(f1,1);
         output.KSgood_f2 = size(f2,1);
-        output.C_dist_post = C_dist;
+        output.C_unweighted_wf_dist_post = C_unweighted_wf_dist;
         output.C_physical_post = C_physical;
         output.C_wf_post = C_wf;
-        output.L2 = L2;
+        % output.L2 = C; removing, because this is a copy of C_unweighted_wf_dist
 end
 
 if v == 1
