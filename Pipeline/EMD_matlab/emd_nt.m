@@ -49,6 +49,7 @@ function [x, fval, L2] = emd_nt(F1, F2, W1, W2, mw1, mw2, chan_pos, dim_mask, l2
 
 % ground distance matrix
 [f,L2] = gdm_nt(F1, F2, mw1, mw2, chan_pos, dim_mask, l2_weight, xStep, zStep, Func);
+% save('gnd_dist.mat','f','-v7.3');
 % fprintf('f = %d, L2 = %d\n', f, L2);
 
 % number of feature vectors
