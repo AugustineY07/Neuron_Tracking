@@ -44,12 +44,15 @@ for i = 1:numel(zIncl(1,:)) %row loop = 11
         cX2 = chan_pos(cc2(j));
         %corr of matching sites
         if (cX1 < mid_point && cX2 < mid_point) || (cX1 > mid_point && cX2 > mid_point)%ismember(cX, cc2_xPos)
-            nSite = nSite + 1;
             wf1 = mw1(cc1(j),:);
             wf2 = mw2(cc2(j),:);
-            % commenting out correlation; not currently used
-            % cv = cv + corr(wf1',wf2');  % remove correlation calculation
-            cl2 = cl2 + norm(wf2-wf1)/max(norm(wf1), norm(wf2));
+            denom = max(norm(wf1), norm(wf2));
+            if denom > 0
+                nSite = nSite + 1;
+                cl2 = cl2 + norm(wf2-wf1)/max(norm(wf1), norm(wf2));
+                % commenting out correlation; not currently used
+                % cv = cv + corr(wf1',wf2');  
+            end
         end
     end
 end
