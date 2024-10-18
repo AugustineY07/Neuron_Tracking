@@ -1,4 +1,6 @@
-# Neuron_Tracking
+# Neuron_Tracking  
+## This repository has been moved to: https://github.com/janelia-TDHarrisLab/Yuan-Neuron_Tracking, please refer to it for the latest updates
+
 This repository contains the code used for the manuscript: "Multi-day Neuron Tracking in High Density Electrophysiology Recordings using EMD". (doi: https://doi.org/10.1101/2023.08.03.551724)
 
 All features are implemented in MATLAB R2023b.
